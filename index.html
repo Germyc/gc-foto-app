@@ -1,1267 +1,2013 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Mis Fotos</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a2e;
-            color: #eee;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #16213e, #0f3460);
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-
-        .header h1 {
-            font-size: 1.3rem;
-            color: #e94560;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 18px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-primary {
-            background: #e94560;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #ff6b6b;
-            transform: scale(1.05);
-        }
-
-        .btn-secondary {
-            background: #533483;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #6c44a0;
-        }
-
-        .btn-success {
-            background: #00b894;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #00d9a3;
-        }
-
-        .btn-danger {
-            background: #d63031;
-            color: white;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-        }
-
-        /* Pantallas */
-        .screen {
-            display: none;
-            padding: 15px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Galería */
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 12px;
-            padding-bottom: 80px;
-        }
-
-        .gallery-item {
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            aspect-ratio: 1;
-            cursor: pointer;
-            transition: transform 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .gallery-item:hover {
-            transform: scale(1.03);
-        }
-
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .gallery-item .overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.8));
-            padding: 30px 10px 10px;
-        }
-
-        .gallery-item .overlay h3 {
-            font-size: 0.8rem;
-            color: white;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .gallery-item .overlay p {
-            font-size: 0.7rem;
-            color: #ccc;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #888;
-        }
-
-        .empty-state .icon {
-            font-size: 4rem;
-            margin-bottom: 15px;
-        }
-
-        .empty-state p {
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-        }
-
-        /* Captura */
-        .capture-area {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .camera-input-wrapper {
-            margin: 20px 0;
-        }
-
-        .camera-input-wrapper input[type="file"] {
-            display: none;
-        }
-
-        .camera-btn {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #e94560, #533483);
-            border: 4px solid #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
-        }
-
-        .camera-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.6);
-        }
-
-        .camera-btn span {
-            font-size: 2.5rem;
-        }
-
-        .preview-container {
-            margin: 20px auto;
-            max-width: 100%;
-            position: relative;
-        }
-
-        .preview-container img {
-            max-width: 100%;
-            max-height: 50vh;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-        }
-
-        /* Recorte */
-        .crop-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-            touch-action: none;
-        }
-
-        .crop-container canvas {
-            width: 100%;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-        }
-
-        .crop-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-        }
-
-        .crop-info {
-            text-align: center;
-            color: #aaa;
-            font-size: 0.85rem;
-            margin: 10px 0;
-        }
-
-        /* Formulario de metadata */
-        .metadata-form {
-            max-width: 400px;
-            margin: 20px auto;
-            background: rgba(255,255,255,0.05);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-            color: #ccc;
-            font-weight: 500;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            background: rgba(0,0,0,0.3);
-            color: white;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #e94560;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        /* Detalle de foto */
-        .photo-detail {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .photo-detail img {
-            width: 100%;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-            margin-bottom: 15px;
-        }
-
-        .photo-detail .info {
-            background: rgba(255,255,255,0.05);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 15px;
-        }
-
-        .photo-detail .info h2 {
-            color: #e94560;
-            margin-bottom: 8px;
-        }
-
-        .photo-detail .info p {
-            color: #ccc;
-            line-height: 1.5;
-        }
-
-        .photo-detail .info .date {
-            font-size: 0.8rem;
-            color: #888;
-            margin-top: 10px;
-        }
-
-        .detail-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        /* Folder status */
-        .folder-status {
-            background: rgba(0,184,148,0.1);
-            border: 1px solid rgba(0,184,148,0.3);
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin: 10px 15px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .folder-status.disconnected {
-            background: rgba(214,48,49,0.1);
-            border-color: rgba(214,48,49,0.3);
-        }
-
-        /* Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: #16213e;
-            border-radius: 16px;
-            padding: 25px;
-            max-width: 400px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .modal h2 {
-            color: #e94560;
-            margin-bottom: 15px;
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #00b894;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            z-index: 300;
-            transition: transform 0.3s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .toast.error {
-            background: #d63031;
-        }
-
-        /* Responsive */
-        @media (max-width: 360px) {
-            .gallery {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .back-btn {
-            background: none;
-            border: none;
-            color: #e94560;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .nav-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #16213e;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
-            z-index: 100;
-        }
-
-        .nav-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-size: 1.3rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nav-btn.active {
-            background: #e94560;
-        }
-
-        .nav-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .search-bar {
-            padding: 10px 15px;
-        }
-
-        .search-bar input {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 25px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.3);
-            color: white;
-            font-size: 0.95rem;
-        }
-
-        .search-bar input:focus {
-            outline: none;
-            border-color: #e94560;
-        }
-
-        .photo-count {
-            text-align: center;
-            color: #888;
-            font-size: 0.85rem;
-            padding: 5px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
+  <title>GermyCode · Foto App</title>
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <style>
+    :root {
+      --bg: #07090e;
+      --surface: #0e1526;
+      --surface-2: #162036;
+      --border: rgba(255, 255, 255, 0.1);
+      --border-accent: rgba(6, 182, 212, 0.45);
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --cyan: #06b6d4;
+      --cyan-bright: #00e5ff;
+      --blue: #2979ff;
+      --gradient: linear-gradient(135deg, #00e5ff 0%, #2979ff 100%);
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --radius: 14px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overscroll-behavior: none;
+    }
+
+    body {
+      min-height: 100dvh;
+      padding-bottom: calc(74px + env(safe-area-inset-bottom));
+    }
+
+    body.mode-fullscreen {
+      overflow: hidden;
+      padding-bottom: 0;
+    }
+
+    body.mode-fullscreen .header,
+    body.mode-fullscreen .nav-bar {
+      display: none !important;
+    }
+
+    /* Header GermyCode */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(7, 9, 14, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-logo-img {
+      height: 32px;
+      width: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .brand-tag {
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cyan-bright);
+      background: rgba(6, 182, 212, 0.14);
+      border: 1px solid var(--border-accent);
+      padding: 3px 7px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .conn-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+      flex-shrink: 0;
+    }
+
+    .conn-dot.error {
+      background: var(--danger);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .screen-pad {
+      padding: 12px 14px 20px;
+    }
+
+    /* Botones */
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 11px;
+      padding: 10px 14px;
+      min-height: 42px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      text-decoration: none;
+      transition: transform 0.12s ease, opacity 0.15s ease, background 0.15s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--gradient);
+      color: #04131c;
+      font-weight: 700;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #032219;
+      font-weight: 700;
+    }
+
+    .btn-secondary {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.16);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-sm {
+      min-height: 34px;
+      padding: 6px 11px;
+      font-size: 0.8rem;
+      border-radius: 9px;
+    }
+
+    .btn-icon {
+      min-height: 38px;
+      min-width: 38px;
+      padding: 7px;
+      border-radius: 10px;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .hidden-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Galería */
+    .search-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .search-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 13px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .search-row input:focus {
+      outline: 2px solid var(--cyan);
+      outline-offset: -1px;
+    }
+
+    .filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+    }
+
+    .pill-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .pill-btn.active {
+      background: rgba(6, 182, 212, 0.18);
+      border-color: var(--border-accent);
+      color: var(--cyan-bright);
+    }
+
+    .count-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (min-width: 560px) {
+      .gallery-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: border-color 0.15s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-accent);
+    }
+
+    .card-thumb {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      background: #02040a;
+      display: block;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      background: rgba(245, 158, 11, 0.92);
+      color: #1c1917;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+
+    .card-body {
+      padding: 9px 10px;
+    }
+
+    .card-title {
+      font-size: 0.86rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .card-title.pending {
+      color: var(--warn);
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    .card-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.1em;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 44px 20px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+
+    .empty-state p {
+      margin: 10px 0 18px;
+      font-size: 0.92rem;
+    }
+
+    /* Pantalla Captura */
+    .capture-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .capture-card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    .capture-card p {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-bottom: 22px;
+    }
+
+    .capture-actions {
+      display: grid;
+      gap: 11px;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    /* ==================== CÁMARA FULLSCREEN 100dvh ==================== */
+    .fullscreen-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: #000;
+      flex-direction: column;
+      height: 100dvh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    .fullscreen-screen.active {
+      display: flex;
+    }
+
+    .cam-view {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .cam-view video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cam-topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: calc(10px + env(safe-area-inset-top)) 12px 12px;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.72), transparent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .cam-pill {
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(7, 9, 14, 0.65);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cam-pill.active {
+      background: rgba(6, 182, 212, 0.9);
+      border-color: var(--cyan-bright);
+      color: #04131c;
+    }
+
+    .cam-pill.flash-on {
+      background: #f59e0b;
+      border-color: #fbbf24;
+      color: #1c1917;
+    }
+
+    .cam-pill:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .camera-flash {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    .camera-flash.pop {
+      opacity: 0.75;
+      transition: none;
+    }
+
+    .cam-bottombar {
+      background: #07090e;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 20px calc(16px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cam-side-btn {
+      justify-self: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: var(--surface-2);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .cam-side-btn:active {
+      transform: scale(0.93);
+    }
+
+    .shutter-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 4px solid #fff;
+      background: var(--gradient);
+      cursor: pointer;
+      box-shadow: 0 0 24px rgba(0, 229, 255, 0.38);
+      transition: transform 0.1s ease;
+    }
+
+    .shutter-btn:active {
+      transform: scale(0.91);
+    }
+
+    /* ==================== EDITOR FULLSCREEN 100dvh ==================== */
+    .editor-shell {
+      background: var(--bg);
+    }
+
+    .editor-topbar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .editor-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .size-pill {
+      font-size: 0.74rem;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .editor-stage {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background: #030509;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #editorCanvas {
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+      border-radius: 4px;
+    }
+
+    .editor-dock {
+      flex-shrink: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .dock-panel {
+      display: none;
+      padding: 10px 12px 8px;
+    }
+
+    .dock-panel.active {
+      display: block;
+    }
+
+    .ratio-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      margin-bottom: 8px;
+      scrollbar-width: none;
+    }
+
+    .ratio-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .ratio-chip {
+      flex: 0 0 auto;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .ratio-chip.active {
+      background: var(--gradient);
+      border-color: transparent;
+      color: #04131c;
+      font-weight: 700;
+    }
+
+    .mini-tools {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .slider-row {
+      display: grid;
+      grid-template-columns: 78px 1fr 40px;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+    }
+
+    .slider-row input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    .slider-val {
+      text-align: right;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: 0.76rem;
+    }
+
+    .compact-fields {
+      display: grid;
+      gap: 8px;
+    }
+
+    .compact-fields input,
+    .compact-fields textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.92rem;
+    }
+
+    .compact-fields textarea {
+      min-height: 58px;
+      max-height: 92px;
+      resize: none;
+    }
+
+    .compact-fields input:focus,
+    .compact-fields textarea:focus {
+      outline: 2px solid var(--cyan);
+      outline-offset: -1px;
+    }
+
+    .dock-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border);
+      background: #0a101d;
+    }
+
+    .dock-tab {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      border-top: 2px solid transparent;
+    }
+
+    .dock-tab.active {
+      color: var(--cyan-bright);
+      border-top-color: var(--cyan-bright);
+      background: rgba(6, 182, 212, 0.08);
+    }
+
+    /* Detalle */
+    .detail-img {
+      width: 100%;
+      max-height: 52dvh;
+      object-fit: contain;
+      background: #02040a;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .detail-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .detail-card h2 {
+      font-size: 1.08rem;
+      margin-bottom: 6px;
+    }
+
+    .detail-card p {
+      color: #cbd5e1;
+      line-height: 1.45;
+      font-size: 0.92rem;
+      white-space: pre-wrap;
+    }
+
+    .detail-meta {
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: grid;
+      gap: 3px;
+      word-break: break-all;
+    }
+
+    .detail-actions {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+    }
+
+    /* Barra inferior principal */
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 60;
+      background: rgba(7, 9, 14, 0.96);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .nav-tab {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 12px;
+      min-height: 44px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    .nav-tab.active {
+      background: var(--surface);
+      border-color: var(--border-accent);
+      color: var(--cyan-bright);
+    }
+
+    .nav-tab-cta {
+      background: var(--gradient);
+      color: #04131c;
+      font-weight: 700;
+      box-shadow: 0 4px 16px rgba(0, 229, 255, 0.22);
+    }
+
+    .nav-tab-cta:active {
+      transform: scale(0.97);
+    }
+
+    .tab-dot {
+      display: none;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .tab-dot.visible {
+      display: inline-block;
+    }
+
+    .publish-banner {
+      display: none;
+      margin: 10px 14px 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.42);
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .publish-banner.visible {
+      display: flex;
+    }
+
+    .publish-banner span {
+      font-size: 0.82rem;
+      color: #fde68a;
+      line-height: 1.3;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: calc(14px + env(safe-area-inset-top));
+      transform: translateX(-50%) translateY(-16px);
+      opacity: 0;
+      pointer-events: none;
+      background: #0f766e;
+      color: #fff;
+      padding: 9px 15px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      z-index: 200;
+      max-width: calc(100vw - 28px);
+      text-align: center;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.error {
+      background: #b91c1c;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(0, 0, 0, 0.25);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <h1>📸 Mis Fotos</h1>
-        <div class="header-actions">
-            <button class="btn btn-secondary btn-small" onclick="setupFolder()" id="folderBtn">📁 Carpeta</button>
-        </div>
+  <header class="header">
+    <div class="brand">
+      <img class="brand-logo-img" src="assets/germycode-logo.webp" alt="GermyCode">
+      <span class="brand-tag">Foto App</span>
+    </div>
+    <div class="header-right">
+      <span class="conn-dot" id="connDot" title="Estado de conexión"></span>
+      <a class="btn btn-secondary btn-sm" href="galeria-demo.html">Ver web</a>
+    </div>
+  </header>
+
+  <input class="hidden-input" type="file" id="galleryInput" accept="image/*">
+
+  <div class="container">
+    <!-- Banner de publicación (solo modo nube / Vercel) -->
+    <div class="publish-banner" id="publishBanner">
+      <span>Hay cambios guardados sin publicar en la web.</span>
+      <button class="btn btn-success btn-sm" type="button" id="publishBtn">Publicar</button>
     </div>
 
-    <!-- Folder Status -->
-    <div class="folder-status disconnected" id="folderStatus">
-        <span>⚠️</span>
-        <span id="folderStatusText">Sin carpeta configurada. Las fotos se guardan en el navegador.</span>
+    <!-- Pantalla 1: Galería -->
+    <section class="screen screen-pad active" id="screenGallery">
+      <div class="search-row">
+        <input type="search" id="searchInput" placeholder="Buscar por título o descripción..." autocomplete="off">
+        <button class="btn btn-secondary btn-icon" type="button" id="refreshBtn" title="Actualizar" aria-label="Actualizar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/>
+          </svg>
+        </button>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-pills">
+          <button class="pill-btn active" type="button" data-filter="all">Todas</button>
+          <button class="pill-btn" type="button" data-filter="pending">Pendientes</button>
+        </div>
+        <span class="count-label" id="photoCount">0 fotos</span>
+      </div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+        </svg>
+        <p id="emptyText">Todavía no hay fotos en la galería.</p>
+        <button class="btn btn-primary" type="button" id="emptyCaptureBtn">Abrir cámara</button>
+      </div>
+    </section>
+
+    <!-- Pantalla 4: Detalle -->
+    <section class="screen screen-pad" id="screenDetail">
+      <div id="detailContent"></div>
+    </section>
+  </div>
+
+  <!-- Pantalla 2B: Cámara FULLSCREEN 100dvh -->
+  <section class="fullscreen-screen" id="screenCamera">
+    <div class="cam-view">
+      <video id="cameraVideo" autoplay playsinline muted></video>
+      <div class="camera-flash" id="cameraFlash"></div>
+      <div class="cam-topbar">
+        <button class="cam-pill" type="button" id="closeCameraBtn">✕ Salir</button>
+        <button class="cam-pill" type="button" id="seqModeBtn">Secuencia: OFF</button>
+        <button class="cam-pill" type="button" id="flashBtn">⚡ OFF</button>
+      </div>
+    </div>
+    <div class="cam-bottombar">
+      <label class="cam-side-btn" for="galleryInput" title="Elegir de galería" aria-label="Elegir de galería">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+        </svg>
+      </label>
+      <button class="shutter-btn" type="button" id="shutterBtn" aria-label="Sacar foto"></button>
+      <button class="cam-side-btn" type="button" id="flipCameraBtn" title="Cambiar cámara" aria-label="Cambiar cámara">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/>
+          <circle cx="12" cy="12" r="3"/><path d="m18 22-3-3 3-3"/><path d="m6 2 3 3-3 3"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Pantalla 3: Editor FULLSCREEN 100dvh (todo entra en pantalla sin scroll) -->
+  <section class="fullscreen-screen editor-shell" id="screenEditor">
+    <div class="editor-topbar">
+      <div class="editor-topbar-left">
+        <button class="btn btn-secondary btn-sm" type="button" id="cancelEditBtn">← Volver</button>
+        <button class="btn btn-secondary btn-sm" type="button" id="retakeBtn">Otra foto</button>
+      </div>
+      <span class="size-pill" id="sizeBadge">0×0</span>
+      <button class="btn btn-success btn-sm" type="button" id="saveBtn">Guardar</button>
     </div>
 
-    <!-- Pantalla Galería -->
-    <div class="screen active" id="screenGallery">
-        <div class="search-bar">
-            <input type="text" placeholder="🔍 Buscar por título o descripción..." id="searchInput" oninput="filterGallery()">
-        </div>
-        <div class="photo-count" id="photoCount"></div>
-        <div class="gallery" id="gallery"></div>
-        <div class="empty-state" id="emptyState">
-            <div class="icon">📷</div>
-            <p>No hay fotos aún</p>
-            <button class="btn btn-primary" onclick="showScreen('screenCapture')">Tomar primera foto</button>
-        </div>
+    <div class="editor-stage" id="editorStage">
+      <canvas id="editorCanvas"></canvas>
     </div>
 
-    <!-- Pantalla Captura -->
-    <div class="screen" id="screenCapture">
-        <div class="capture-area">
-            <h2 style="margin-bottom:20px; color:#e94560;">📷 Tomar Foto</h2>
-            <div class="camera-input-wrapper">
-                <label class="camera-btn" for="cameraInput">
-                    <span>📸</span>
-                </label>
-                <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleCapture(event)">
+    <div class="editor-dock">
+      <!-- Panel 1: Recortar -->
+      <div class="dock-panel active" id="panelCrop">
+        <div class="ratio-bar" id="ratioBar">
+          <button class="ratio-chip active" type="button" data-ratio="free">Libre</button>
+          <button class="ratio-chip" type="button" data-ratio="1">1:1</button>
+          <button class="ratio-chip" type="button" data-ratio="1.3333333">4:3</button>
+          <button class="ratio-chip" type="button" data-ratio="1.7777778">16:9</button>
+          <button class="ratio-chip" type="button" data-ratio="0.8">4:5</button>
+          <button class="ratio-chip" type="button" data-ratio="0.5625">9:16</button>
+        </div>
+        <div class="mini-tools">
+          <button class="btn btn-secondary btn-sm" type="button" id="rotateBtn">Rotar 90°</button>
+          <button class="btn btn-secondary btn-sm" type="button" id="flipHBtn">Espejo</button>
+          <button class="btn btn-secondary btn-sm" type="button" id="resetCropBtn">Resetear</button>
+        </div>
+      </div>
+
+      <!-- Panel 2: Ajustes de color -->
+      <div class="dock-panel" id="panelAdjust">
+        <div class="slider-row">
+          <label for="brightnessRange">Brillo</label>
+          <input type="range" id="brightnessRange" min="50" max="150" value="100">
+          <span class="slider-val" id="brightnessVal">100%</span>
+        </div>
+        <div class="slider-row">
+          <label for="contrastRange">Contraste</label>
+          <input type="range" id="contrastRange" min="50" max="150" value="100">
+          <span class="slider-val" id="contrastVal">100%</span>
+        </div>
+        <div class="slider-row">
+          <label for="saturateRange">Saturación</label>
+          <input type="range" id="saturateRange" min="0" max="180" value="100">
+          <span class="slider-val" id="saturateVal">100%</span>
+        </div>
+        <button class="btn btn-secondary btn-sm btn-block" type="button" id="resetAdjustBtn">Restablecer color</button>
+      </div>
+
+      <!-- Panel 3: Título y Descripción -->
+      <div class="dock-panel" id="panelMeta">
+        <div class="compact-fields">
+          <input type="text" id="photoTitle" maxlength="100" placeholder="Título (opcional)">
+          <textarea id="photoDesc" maxlength="500" placeholder="Descripción, precio o detalle (opcional)..."></textarea>
+        </div>
+      </div>
+
+      <!-- Tabs del dock -->
+      <div class="dock-tabs" id="dockTabs">
+        <button class="dock-tab active" type="button" data-panel="panelCrop">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>
+          </svg>
+          Recortar
+        </button>
+        <button class="dock-tab" type="button" data-panel="panelAdjust">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+          Ajustes
+        </button>
+        <button class="dock-tab" type="button" data-panel="panelMeta">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+          </svg>
+          Datos
+          <span class="tab-dot" id="metaDot"></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navegación inferior principal -->
+  <nav class="nav-bar" id="navBar">
+    <button class="nav-tab active" type="button" id="tabGallery">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      Galería
+    </button>
+    <button class="nav-tab nav-tab-cta" type="button" id="tabCapture">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>
+      </svg>
+      Nueva foto
+    </button>
+  </nav>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const MAX_SIDE = 1280;
+    const JPEG_QUALITY = 0.85;
+    const MIN_CROP_PX = 36;
+
+    let photos = [];
+    let activeFilter = 'all';
+    let currentPhotoId = null;
+    let editingPhotoId = null;
+    let imageModified = false;
+    let supportsPublish = false;
+    let hasUnpublished = false;
+
+    // Cámara en vivo
+    let cameraStream = null;
+    let cameraFacing = 'environment';
+    let torchEnabled = false;
+    let torchSupported = false;
+    let seqMode = false;
+    let seqSavedCount = 0;
+    let seqUploading = false;
+
+    // Editor
+    let sourceCanvas = null;
+    let cropAspect = null;
+    let cropRect = { x: 0, y: 0, w: 0, h: 0 };
+    let dragState = null;
+    let adjustments = { brightness: 100, contrast: 100, saturate: 100 };
+
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(msg, isError = false) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.className = 'toast show' + (isError ? ' error' : '');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    function formatKB(bytes) {
+      return `${Math.max(1, Math.round((bytes || 0) / 1024))} KB`;
+    }
+
+    function getFilterString() {
+      return `brightness(${adjustments.brightness}%) contrast(${adjustments.contrast}%) saturate(${adjustments.saturate}%)`;
+    }
+
+    function updateFlashUI() {
+      const btn = $('flashBtn');
+      btn.classList.toggle('flash-on', torchEnabled);
+      btn.textContent = torchEnabled ? '⚡ ON' : '⚡ OFF';
+      btn.disabled = !torchSupported;
+    }
+
+    function updateSeqUI() {
+      const btn = $('seqModeBtn');
+      btn.classList.toggle('active', seqMode);
+      btn.textContent = seqMode
+        ? (seqSavedCount > 0 ? `Secuencia (${seqSavedCount})` : 'Secuencia: ON')
+        : 'Secuencia: OFF';
+      $('closeCameraBtn').textContent = seqSavedCount > 0 ? `✓ Listo (${seqSavedCount})` : '✕ Salir';
+    }
+
+    async function toggleFlash() {
+      if (!cameraStream) return;
+      const track = cameraStream.getVideoTracks()[0];
+      if (!track) return;
+      const next = !torchEnabled;
+      try {
+        await track.applyConstraints({ advanced: [{ torch: next }] });
+        torchEnabled = next;
+        updateFlashUI();
+      } catch {
+        showToast('Esta cámara no soporta flash desde el navegador', true);
+      }
+    }
+
+    function stopLiveCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((t) => t.stop());
+        cameraStream = null;
+      }
+      torchEnabled = false;
+      torchSupported = false;
+      updateFlashUI();
+      const video = $('cameraVideo');
+      if (video) video.srcObject = null;
+    }
+
+    function showScreen(screenId) {
+      if (screenId !== 'screenCamera') stopLiveCamera();
+      document.querySelectorAll('.screen, .fullscreen-screen').forEach((s) => s.classList.remove('active'));
+      $(screenId).classList.add('active');
+
+      const isFs = screenId === 'screenCamera' || screenId === 'screenEditor';
+      document.body.classList.toggle('mode-fullscreen', isFs);
+
+      if (!isFs) {
+        const showNav = screenId === 'screenGallery';
+        $('navBar').style.display = showNav ? 'grid' : 'none';
+        $('tabGallery').classList.toggle('active', screenId === 'screenGallery');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
+    }
+
+    function photoSrc(photo) {
+      return (photo && (photo.previewUrl || photo.image)) || '';
+    }
+
+    function updatePublishBanner() {
+      $('publishBanner').classList.toggle('visible', Boolean(supportsPublish && hasUnpublished));
+    }
+
+    function markUnpublished() {
+      if (!supportsPublish) return;
+      hasUnpublished = true;
+      updatePublishBanner();
+    }
+
+    async function publishChanges() {
+      const btn = $('publishBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Publicando...';
+      try {
+        const res = await fetch('/api/publish', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'No se pudo publicar');
+        hasUnpublished = false;
+        updatePublishBanner();
+        showToast('Publicación iniciada (~20 s para verse en la web)');
+      } catch (err) {
+        showToast(err.message || 'Error al publicar', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Publicar';
+      }
+    }
+
+    async function checkServer() {
+      try {
+        const res = await fetch('/api/health', { cache: 'no-store' });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        supportsPublish = Boolean(data.supportsPublish);
+        hasUnpublished = Boolean(data.hasUnpublished);
+        updatePublishBanner();
+        $('connDot').classList.remove('error');
+        $('connDot').title = `Conectado (${data.mode}) → ${data.folder}`;
+        return true;
+      } catch {
+        $('connDot').classList.add('error');
+        $('connDot').title = 'Sin conexión con /api/photos';
+        showToast('Sin conexión con el servidor', true);
+        return false;
+      }
+    }
+
+    async function loadPhotos() {
+      try {
+        const res = await fetch('/api/photos', { cache: 'no-store' });
+        if (!res.ok) throw new Error('No se pudo leer la galería');
+        photos = await res.json();
+        renderGallery();
+      } catch (err) {
+        showToast(err.message || 'Error al cargar fotos', true);
+      }
+    }
+
+    function renderGallery() {
+      const term = $('searchInput').value.trim().toLowerCase();
+      const filtered = photos.filter((p) => {
+        if (activeFilter === 'pending' && p.title) return false;
+        if (!term) return true;
+        return (
+          (p.title || '').toLowerCase().includes(term) ||
+          (p.description || '').toLowerCase().includes(term)
+        );
+      });
+
+      $('photoCount').textContent = `${filtered.length} foto${filtered.length === 1 ? '' : 's'}`;
+      const grid = $('galleryGrid');
+      const empty = $('emptyState');
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        if (activeFilter === 'pending') {
+          $('emptyText').textContent = 'Todas las fotos ya tienen título.';
+          $('emptyCaptureBtn').style.display = 'none';
+        } else if (term) {
+          $('emptyText').textContent = 'No hay fotos que coincidan con la búsqueda.';
+          $('emptyCaptureBtn').style.display = 'none';
+        } else {
+          $('emptyText').textContent = 'Todavía no hay fotos en la galería.';
+          $('emptyCaptureBtn').style.display = 'inline-flex';
+        }
+        return;
+      }
+
+      empty.style.display = 'none';
+      grid.innerHTML = filtered
+        .map(
+          (p) => `
+          <article class="card" data-id="${escapeHtml(p.id)}">
+            ${!p.title ? '<span class="card-badge">Sin título</span>' : ''}
+            <img class="card-thumb" src="${escapeHtml(photoSrc(p))}" alt="${escapeHtml(p.title || 'Foto sin título')}" loading="lazy">
+            <div class="card-body">
+              <h3 class="card-title ${p.title ? '' : 'pending'}">${escapeHtml(p.title || 'Pendiente de datos')}</h3>
+              <p class="card-desc">${escapeHtml(p.description || 'Sin descripción')}</p>
             </div>
-            <p style="color:#888; margin-top:15px;">Toca el botón para abrir la cámara</p>
-            <p style="color:#666; margin-top:8px; font-size:0.85rem;">También puedes seleccionar una imagen de la galería</p>
-            <div style="margin-top:15px;">
-                <label class="btn btn-secondary" for="galleryInput" style="cursor:pointer;">
-                    🖼️ Seleccionar de galería
-                </label>
-                <input type="file" id="galleryInput" accept="image/*" onchange="handleCapture(event)" style="display:none;">
-            </div>
+          </article>
+        `
+        )
+        .join('');
+
+      grid.querySelectorAll('.card').forEach((card) => {
+        card.addEventListener('click', () => openDetail(card.dataset.id));
+      });
+    }
+
+    function openDetail(id) {
+      const photo = photos.find((p) => String(p.id) === String(id));
+      if (!photo) return;
+      currentPhotoId = photo.id;
+      const dateStr = photo.date ? new Date(photo.date).toLocaleString('es-AR') : '';
+      const sizeStr = photo.sizeBytes ? ` · ${formatKB(photo.sizeBytes)}` : '';
+
+      $('detailContent').innerHTML = `
+        <img class="detail-img" src="${escapeHtml(photoSrc(photo))}" alt="${escapeHtml(photo.title || 'Foto sin título')}">
+        <div class="detail-card">
+          <h2>${escapeHtml(photo.title || 'Sin título')}</h2>
+          <p>${escapeHtml(photo.description || 'Sin descripción')}</p>
+          <div class="detail-meta">
+            <span>Archivo: ${escapeHtml(photo.image)}${sizeStr}</span>
+            <span>Fecha: ${escapeHtml(dateStr)}</span>
+          </div>
         </div>
-    </div>
-
-    <!-- Pantalla Recorte -->
-    <div class="screen" id="screenCrop">
-        <h2 style="text-align:center; margin-bottom:15px; color:#e94560;">✂️ Recortar Foto</h2>
-        <div class="crop-info">Arrastra las esquinas o los bordes para recortar</div>
-        <div class="crop-container" id="cropContainer">
-            <canvas id="cropCanvas"></canvas>
+        <div class="detail-actions">
+          <button class="btn btn-secondary btn-sm" type="button" id="detailBackBtn">← Volver</button>
+          <button class="btn btn-primary btn-sm" type="button" id="detailEditBtn">Editar foto / datos</button>
+          <button class="btn btn-danger btn-sm" type="button" id="detailDeleteBtn">Borrar</button>
         </div>
-        <div class="crop-controls">
-            <button class="btn btn-secondary btn-small" onclick="resetCrop()">↺ Resetear</button>
-            <button class="btn btn-secondary btn-small" onclick="rotateCrop()">🔄 Rotar</button>
-            <button class="btn btn-primary btn-small" onclick="applyCrop()">✓ Aplicar recorte</button>
-        </div>
-    </div>
+      `;
 
-    <!-- Pantalla Metadata -->
-    <div class="screen" id="screenMetadata">
-        <h2 style="text-align:center; margin-bottom:15px; color:#e94560;">📝 Información de la foto</h2>
-        <div class="preview-container" style="text-align:center;">
-            <img id="metadataPreview" src="" alt="Preview">
-        </div>
-        <div class="metadata-form">
-            <div class="form-group">
-                <label for="photoTitle">Título *</label>
-                <input type="text" id="photoTitle" placeholder="Ej: Atardecer en la playa">
-            </div>
-            <div class="form-group">
-                <label for="photoDesc">Descripción</label>
-                <textarea id="photoDesc" placeholder="Escribe una descripción..."></textarea>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="btn btn-success" onclick="savePhoto()" style="flex:1;">💾 Guardar</button>
-                <button class="btn btn-danger" onclick="cancelCapture()" style="flex:1;">✕ Cancelar</button>
-            </div>
-        </div>
-    </div>
+      $('detailBackBtn').addEventListener('click', () => showScreen('screenGallery'));
+      $('detailEditBtn').addEventListener('click', () => editExistingPhoto(photo));
+      $('detailDeleteBtn').addEventListener('click', () => deletePhoto(photo.id));
+      showScreen('screenDetail');
+    }
 
-    <!-- Pantalla Detalle -->
-    <div class="screen" id="screenDetail">
-        <div class="photo-detail" id="photoDetail"></div>
-    </div>
+    async function editExistingPhoto(photo) {
+      try {
+        const img = await new Promise((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = () => reject(new Error('No se pudo cargar la imagen para editar'));
+          i.src = photoSrc(photo);
+        });
 
-    <!-- Navegación inferior -->
-    <div class="nav-bar" id="navBar">
-        <button class="nav-btn active" onclick="showScreen('screenGallery')" title="Galería">🏠</button>
-        <button class="nav-btn" onclick="showScreen('screenCapture')" title="Tomar foto">📷</button>
-    </div>
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
 
-    <!-- Modal Editar -->
-    <div class="modal-overlay" id="editModal">
-        <div class="modal">
-            <h2>✏️ Editar foto</h2>
-            <div class="form-group">
-                <label for="editTitle">Título</label>
-                <input type="text" id="editTitle">
-            </div>
-            <div class="form-group">
-                <label for="editDesc">Descripción</label>
-                <textarea id="editDesc"></textarea>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="btn btn-success" onclick="updatePhoto()">💾 Guardar</button>
-                <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancelar</button>
-            </div>
-        </div>
-    </div>
+        editingPhotoId = photo.id;
+        imageModified = false;
+        openEditorWithCanvas(canvas, photo.title || '', photo.description || '');
+      } catch (err) {
+        showToast(err.message || 'Error al abrir el editor', true);
+      }
+    }
 
-    <!-- Toast -->
-    <div class="toast" id="toast"></div>
+    async function deletePhoto(id) {
+      if (!confirm('¿Eliminar esta foto de la galería?')) return;
+      try {
+        const res = await fetch(`/api/photos/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'No se pudo eliminar');
+        photos = photos.filter((p) => String(p.id) !== String(id));
+        markUnpublished();
+        renderGallery();
+        showScreen('screenGallery');
+        showToast('Foto eliminada');
+      } catch (err) {
+        showToast(err.message || 'Error al eliminar', true);
+      }
+    }
 
-    <script>
-        // Estado de la app
-        let photos = [];
-        let currentImageData = null;
-        let currentEditId = null;
-        let folderHandle = null;
-        let cropData = { startX: 0, startY: 0, endX: 0, endY: 0, dragging: null, rotation: 0 };
-        let originalImage = null;
+    // ==================== CÁMARA EN VIVO ====================
+    async function startLiveCamera(facing = cameraFacing) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('Sin cámara disponible, abriendo galería...');
+        $('galleryInput').click();
+        return;
+      }
 
-        // IndexedDB
-        const DB_NAME = 'MisFotosDB';
-        const DB_VERSION = 1;
-        let db;
+      stopLiveCamera();
+      cameraFacing = facing;
 
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve(db);
-                };
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains('photos')) {
-                        const store = db.createObjectStore('photos', { keyPath: 'id' });
-                        store.createIndex('date', 'date');
-                    }
-                };
-            });
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: cameraFacing },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+          audio: false,
+        });
+      } catch {
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch {
+          showToast('Sin cámara disponible, abriendo galería...');
+          $('galleryInput').click();
+          return;
+        }
+      }
+
+      const video = $('cameraVideo');
+      video.srcObject = cameraStream;
+      seqSavedCount = 0;
+
+      torchEnabled = false;
+      torchSupported = false;
+      const track = cameraStream.getVideoTracks()[0];
+      if (track && typeof track.getCapabilities === 'function') {
+        try {
+          const caps = track.getCapabilities();
+          torchSupported = Boolean(caps && caps.torch);
+        } catch {}
+      }
+      updateFlashUI();
+      updateSeqUI();
+
+      showScreen('screenCamera');
+      try {
+        await video.play();
+      } catch {}
+    }
+
+    async function captureFromVideo() {
+      const video = $('cameraVideo');
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (!vw || !vh) {
+        showToast('Esperá un segundo a que cargue la cámara', true);
+        return;
+      }
+
+      const scale = Math.min(1, MAX_SIDE / Math.max(vw, vh));
+      const targetW = Math.max(1, Math.round(vw * scale));
+      const targetH = Math.max(1, Math.round(vh * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, targetW, targetH);
+      ctx.drawImage(video, 0, 0, targetW, targetH);
+
+      if (seqMode) {
+        if (seqUploading) return;
+        seqUploading = true;
+        const flash = $('cameraFlash');
+        flash.classList.add('pop');
+        requestAnimationFrame(() => flash.classList.remove('pop'));
+
+        try {
+          const imageDataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+          const res = await fetch('/api/photos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: '', description: '', image: imageDataUrl }),
+          });
+          const created = await res.json();
+          if (!res.ok) throw new Error(created.error || 'Error al guardar');
+
+          photos.unshift(created);
+          markUnpublished();
+          seqSavedCount += 1;
+          updateSeqUI();
+          showToast(`Foto #${seqSavedCount} guardada`);
+        } catch (err) {
+          showToast(err.message || 'Error al guardar foto', true);
+        } finally {
+          seqUploading = false;
+        }
+        return;
+      }
+
+      stopLiveCamera();
+      editingPhotoId = null;
+      imageModified = true;
+      openEditorWithCanvas(canvas, '', '');
+    }
+
+    // ==================== ARCHIVO DESDE GALERÍA ====================
+    async function fileToResizedCanvas(file) {
+      let source = null;
+      let width = 0;
+      let height = 0;
+      let cleanup = () => {};
+
+      if (typeof createImageBitmap === 'function') {
+        try {
+          const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+          source = bmp; width = bmp.width; height = bmp.height;
+          cleanup = () => bmp.close();
+        } catch {
+          try {
+            const bmp = await createImageBitmap(file);
+            source = bmp; width = bmp.width; height = bmp.height;
+            cleanup = () => bmp.close();
+          } catch {}
+        }
+      }
+
+      if (!source) {
+        const url = URL.createObjectURL(file);
+        try {
+          const img = await new Promise((resolve, reject) => {
+            const i = new Image();
+            i.onload = () => resolve(i);
+            i.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+            i.src = url;
+          });
+          source = img;
+          width = img.naturalWidth || img.width;
+          height = img.naturalHeight || img.height;
+          cleanup = () => URL.revokeObjectURL(url);
+        } catch (err) {
+          URL.revokeObjectURL(url);
+          throw err;
+        }
+      }
+
+      try {
+        const scale = Math.min(1, MAX_SIDE / Math.max(width, height));
+        const targetW = Math.max(1, Math.round(width * scale));
+        const targetH = Math.max(1, Math.round(height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, targetW, targetH);
+        ctx.drawImage(source, 0, 0, targetW, targetH);
+        return canvas;
+      } finally {
+        cleanup();
+      }
+    }
+
+    async function handleFileInput(event) {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+
+      showToast('Procesando imagen...');
+      try {
+        const canvas = await fileToResizedCanvas(file);
+        stopLiveCamera();
+        editingPhotoId = null;
+        imageModified = true;
+        openEditorWithCanvas(canvas, '', '');
+      } catch (err) {
+        showToast(err.message || 'No se pudo procesar la foto', true);
+      }
+    }
+
+    // ==================== EDITOR FULLSCREEN ====================
+    function resetAdjustmentsState() {
+      adjustments = { brightness: 100, contrast: 100, saturate: 100 };
+      $('brightnessRange').value = 100;
+      $('contrastRange').value = 100;
+      $('saturateRange').value = 100;
+      $('brightnessVal').textContent = '100%';
+      $('contrastVal').textContent = '100%';
+      $('saturateVal').textContent = '100%';
+    }
+
+    function setDockTab(panelId) {
+      document.querySelectorAll('.dock-tab').forEach((t) => {
+        t.classList.toggle('active', t.dataset.panel === panelId);
+      });
+      document.querySelectorAll('.dock-panel').forEach((p) => {
+        p.classList.toggle('active', p.id === panelId);
+      });
+      requestAnimationFrame(() => {
+        if (sourceCanvas) {
+          preserveCropOnResize();
+        }
+      });
+    }
+
+    function openEditorWithCanvas(canvas, title, description) {
+      sourceCanvas = canvas;
+      cropAspect = null;
+      resetAdjustmentsState();
+      document.querySelectorAll('.ratio-chip').forEach((c) => {
+        c.classList.toggle('active', c.dataset.ratio === 'free');
+      });
+
+      $('retakeBtn').style.display = editingPhotoId ? 'none' : 'inline-flex';
+      $('photoTitle').value = title;
+      $('photoDesc').value = description;
+      updateMetaDot();
+      setDockTab('panelCrop');
+      showScreen('screenEditor');
+
+      requestAnimationFrame(() => {
+        fitEditorCanvas();
+        resetCropRect();
+        drawEditorCanvas();
+      });
+    }
+
+    function fitEditorCanvas() {
+      const stage = $('editorStage');
+      const canvas = $('editorCanvas');
+      if (!sourceCanvas || !stage) return;
+      const availW = Math.max(160, stage.clientWidth - 20);
+      const availH = Math.max(160, stage.clientHeight - 20);
+      const scale = Math.min(availW / sourceCanvas.width, availH / sourceCanvas.height, 1);
+      canvas.width = Math.max(100, Math.round(sourceCanvas.width * scale));
+      canvas.height = Math.max(100, Math.round(sourceCanvas.height * scale));
+    }
+
+    function preserveCropOnResize() {
+      const canvas = $('editorCanvas');
+      if (!sourceCanvas || !canvas.width || !canvas.height) return;
+      const rx = cropRect.x / canvas.width;
+      const ry = cropRect.y / canvas.height;
+      const rw = cropRect.w / canvas.width;
+      const rh = cropRect.h / canvas.height;
+      fitEditorCanvas();
+      cropRect = {
+        x: rx * canvas.width,
+        y: ry * canvas.height,
+        w: rw * canvas.width,
+        h: rh * canvas.height,
+      };
+      drawEditorCanvas();
+    }
+
+    function resetCropRect() {
+      const canvas = $('editorCanvas');
+      if (!cropAspect) {
+        cropRect = { x: 0, y: 0, w: canvas.width, h: canvas.height };
+      } else {
+        let w = canvas.width;
+        let h = w / cropAspect;
+        if (h > canvas.height) {
+          h = canvas.height;
+          w = h * cropAspect;
+        }
+        cropRect = {
+          x: (canvas.width - w) / 2,
+          y: (canvas.height - h) / 2,
+          w,
+          h,
+        };
+      }
+      updateOutputSizeBadge();
+    }
+
+    function updateOutputSizeBadge() {
+      const canvas = $('editorCanvas');
+      if (!sourceCanvas || !canvas.width) return;
+      const outW = Math.max(1, Math.round((cropRect.w / canvas.width) * sourceCanvas.width));
+      const outH = Math.max(1, Math.round((cropRect.h / canvas.height) * sourceCanvas.height));
+      $('sizeBadge').textContent = `${outW}×${outH}`;
+    }
+
+    function drawEditorCanvas() {
+      const canvas = $('editorCanvas');
+      if (!sourceCanvas || !canvas.width) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.filter = getFilterString();
+      ctx.drawImage(sourceCanvas, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      const { x, y, w, h } = cropRect;
+
+      // Oscurecer exterior
+      ctx.fillStyle = 'rgba(3, 5, 9, 0.64)';
+      ctx.fillRect(0, 0, canvas.width, y);
+      ctx.fillRect(0, y + h, canvas.width, canvas.height - (y + h));
+      ctx.fillRect(0, y, x, h);
+      ctx.fillRect(x + w, y, canvas.width - (x + w), h);
+
+      // Tercios
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x + (w / 3) * i, y);
+        ctx.lineTo(x + (w / 3) * i, y + h);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x, y + (h / 3) * i);
+        ctx.lineTo(x + w, y + (h / 3) * i);
+        ctx.stroke();
+      }
+
+      // Marco cian GermyCode
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+
+      // Handles en esquinas
+      const corners = [
+        [x, y],
+        [x + w, y],
+        [x, y + h],
+        [x + w, y + h],
+      ];
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 2.5;
+      for (const [cx, cy] of corners) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      updateOutputSizeBadge();
+    }
+
+    function getCanvasPoint(e) {
+      const canvas = $('editorCanvas');
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: ((e.clientX - rect.left) * canvas.width) / rect.width,
+        y: ((e.clientY - rect.top) * canvas.height) / rect.height,
+      };
+    }
+
+    function hitTestCrop(pt) {
+      const { x, y, w, h } = cropRect;
+      const hit = 26;
+      const corners = [
+        { type: 'tl', cx: x, cy: y },
+        { type: 'tr', cx: x + w, cy: y },
+        { type: 'bl', cx: x, cy: y + h },
+        { type: 'br', cx: x + w, cy: y + h },
+      ];
+      for (const c of corners) {
+        if (Math.hypot(pt.x - c.cx, pt.y - c.cy) <= hit) return c.type;
+      }
+      if (pt.x >= x && pt.x <= x + w && pt.y >= y && pt.y <= y + h) return 'move';
+      return null;
+    }
+
+    function onEditorPointerDown(e) {
+      if (!sourceCanvas) return;
+      const pt = getCanvasPoint(e);
+      const mode = hitTestCrop(pt);
+      if (!mode) return;
+      e.preventDefault();
+      $('editorCanvas').setPointerCapture(e.pointerId);
+      dragState = { mode, startPt: pt, startRect: { ...cropRect } };
+    }
+
+    function onEditorPointerMove(e) {
+      if (!dragState) return;
+      e.preventDefault();
+      const canvas = $('editorCanvas');
+      const pt = getCanvasPoint(e);
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const sr = dragState.startRect;
+
+      if (dragState.mode === 'move') {
+        cropRect.x = Math.max(0, Math.min(cw - sr.w, sr.x + (pt.x - dragState.startPt.x)));
+        cropRect.y = Math.max(0, Math.min(ch - sr.h, sr.y + (pt.y - dragState.startPt.y)));
+      } else {
+        const m = dragState.mode;
+        const anchorX = m.includes('l') ? sr.x + sr.w : sr.x;
+        const anchorY = m.includes('t') ? sr.y + sr.h : sr.y;
+        const dirX = m.includes('l') ? -1 : 1;
+        const dirY = m.includes('t') ? -1 : 1;
+        const maxW = dirX === -1 ? anchorX : cw - anchorX;
+        const maxH = dirY === -1 ? anchorY : ch - anchorY;
+
+        let newW = Math.max(MIN_CROP_PX, Math.min(maxW, (pt.x - anchorX) * dirX));
+        let newH = Math.max(MIN_CROP_PX, Math.min(maxH, (pt.y - anchorY) * dirY));
+
+        if (cropAspect) {
+          if (newW / newH > cropAspect) newW = newH * cropAspect;
+          else newH = newW / cropAspect;
+          if (newW > maxW) { newW = maxW; newH = newW / cropAspect; }
+          if (newH > maxH) { newH = maxH; newW = newH * cropAspect; }
+          if (newW < MIN_CROP_PX || newH < MIN_CROP_PX) return;
         }
 
-        function saveToDB(photo) {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction('photos', 'readwrite');
-                const store = tx.objectStore('photos');
-                store.put(photo);
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
-            });
+        cropRect.x = dirX === -1 ? anchorX - newW : anchorX;
+        cropRect.y = dirY === -1 ? anchorY - newH : anchorY;
+        cropRect.w = newW;
+        cropRect.h = newH;
+      }
+
+      imageModified = true;
+      drawEditorCanvas();
+    }
+
+    function onEditorPointerUp(e) {
+      if (!dragState) return;
+      try { $('editorCanvas').releasePointerCapture(e.pointerId); } catch {}
+      dragState = null;
+    }
+
+    function transformSourceCanvas(mode) {
+      if (!sourceCanvas) return;
+      const out = document.createElement('canvas');
+      const ctx = out.getContext('2d');
+      if (mode === 'rotate') {
+        out.width = sourceCanvas.height;
+        out.height = sourceCanvas.width;
+        ctx.translate(out.width / 2, out.height / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(sourceCanvas, -sourceCanvas.width / 2, -sourceCanvas.height / 2);
+      } else if (mode === 'flipH') {
+        out.width = sourceCanvas.width;
+        out.height = sourceCanvas.height;
+        ctx.translate(out.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(sourceCanvas, 0, 0);
+      }
+      sourceCanvas = out;
+      imageModified = true;
+      fitEditorCanvas();
+      resetCropRect();
+      drawEditorCanvas();
+    }
+
+    function exportEditedDataUrl() {
+      const canvas = $('editorCanvas');
+      const scaleX = sourceCanvas.width / canvas.width;
+      const scaleY = sourceCanvas.height / canvas.height;
+      const sx = Math.max(0, Math.round(cropRect.x * scaleX));
+      const sy = Math.max(0, Math.round(cropRect.y * scaleY));
+      const sw = Math.max(1, Math.min(sourceCanvas.width - sx, Math.round(cropRect.w * scaleX)));
+      const sh = Math.max(1, Math.min(sourceCanvas.height - sy, Math.round(cropRect.h * scaleY)));
+
+      const outScale = Math.min(1, MAX_SIDE / Math.max(sw, sh));
+      const out = document.createElement('canvas');
+      out.width = Math.max(1, Math.round(sw * outScale));
+      out.height = Math.max(1, Math.round(sh * outScale));
+      const ctx = out.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.filter = getFilterString();
+      ctx.drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, out.width, out.height);
+      return out.toDataURL('image/jpeg', JPEG_QUALITY);
+    }
+
+    async function saveCurrentEdit() {
+      if (!sourceCanvas) return;
+      const title = $('photoTitle').value.trim();
+      const description = $('photoDesc').value.trim();
+      const btn = $('saveBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      try {
+        if (editingPhotoId) {
+          const payload = { title, description };
+          if (imageModified) payload.image = exportEditedDataUrl();
+          const res = await fetch(`/api/photos/${encodeURIComponent(editingPhotoId)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const updated = await res.json();
+          if (!res.ok) throw new Error(updated.error || 'Error al actualizar');
+
+          photos = photos.map((p) => (String(p.id) === String(updated.id) ? updated : p));
+          markUnpublished();
+          sourceCanvas = null;
+          editingPhotoId = null;
+          renderGallery();
+          openDetail(updated.id);
+          showToast('Foto actualizada');
+        } else {
+          const imageDataUrl = exportEditedDataUrl();
+          const res = await fetch('/api/photos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, description, image: imageDataUrl }),
+          });
+          const created = await res.json();
+          if (!res.ok) throw new Error(created.error || 'Error al guardar');
+
+          photos.unshift(created);
+          markUnpublished();
+          sourceCanvas = null;
+          renderGallery();
+          showScreen('screenGallery');
+          showToast('Foto guardada en galeria/');
         }
-
-        function deleteFromDB(id) {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction('photos', 'readwrite');
-                const store = tx.objectStore('photos');
-                store.delete(id);
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => reject(tx.error);
-            });
-        }
-
-        function getAllFromDB() {
-            return new Promise((resolve, reject) => {
-                const tx = db.transaction('photos', 'readonly');
-                const store = tx.objectStore('photos');
-                const request = store.getAll();
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        // File System Access API
-        async function setupFolder() {
-            if (!window.showDirectoryPicker) {
-                showToast('Tu navegador no soporta guardado en carpeta. Las fotos se guardan en el navegador.', 'error');
-                return;
-            }
-            try {
-                folderHandle = await window.showDirectoryPicker({
-                    mode: 'readwrite',
-                    startIn: 'pictures'
-                });
-                document.getElementById('folderStatus').classList.remove('disconnected');
-                document.getElementById('folderStatusText').textContent = `📁 Carpeta: ${folderHandle.name}`;
-                document.getElementById('folderBtn').textContent = '📁 ' + folderHandle.name;
-                showToast('Carpeta configurada correctamente');
-            } catch (e) {
-                if (e.name !== 'AbortError') {
-                    showToast('Error al seleccionar carpeta', 'error');
-                }
-            }
-        }
-
-        async function saveToFolder(filename, blob) {
-            if (!folderHandle) return false;
-            try {
-                const fileHandle = await folderHandle.getFileHandle(filename, { create: true });
-                const writable = await fileHandle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-                return true;
-            } catch (e) {
-                console.error('Error guardando en carpeta:', e);
-                return false;
-            }
-        }
-
-        async function deleteFromFolder(filename) {
-            if (!folderHandle) return;
-            try {
-                await folderHandle.removeEntry(filename);
-            } catch (e) {
-                console.log('No se pudo eliminar del filesystem:', e);
-            }
-        }
-
-        // Navegación
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            if (screenId === 'screenGallery') {
-                document.querySelectorAll('.nav-btn')[0].classList.add('active');
-                renderGallery();
-            } else if (screenId === 'screenCapture') {
-                document.querySelectorAll('.nav-btn')[1].classList.add('active');
-            }
-
-            // Mostrar/ocultar nav bar
-            const navBar = document.getElementById('navBar');
-            if (['screenDetail', 'screenCrop', 'screenMetadata'].includes(screenId)) {
-                navBar.style.display = 'none';
-            } else {
-                navBar.style.display = 'flex';
-            }
-        }
-
-        // Captura
-        function handleCapture(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                currentImageData = e.target.result;
-                initCrop();
-                showScreen('screenCrop');
-            };
-            reader.readAsDataURL(file);
-            event.target.value = '';
-        }
-
-        // Recorte
-        function initCrop() {
-            const canvas = document.getElementById('cropCanvas');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.onload = () => {
-                originalImage = img;
-                const maxW = Math.min(400, window.innerWidth - 30);
-                const ratio = img.height / img.width;
-                canvas.width = maxW;
-                canvas.height = maxW * ratio;
-                cropData = {
-                    startX: 0,
-                    startY: 0,
-                    endX: canvas.width,
-                    endY: canvas.height,
-                    dragging: null,
-                    rotation: 0,
-                    imgWidth: img.width,
-                    imgHeight: img.height
-                };
-                drawCrop();
-                setupCropEvents();
-            };
-            img.src = currentImageData;
-        }
-
-        function drawCrop() {
-            const canvas = document.getElementById('cropCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Dibujar imagen
-            ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
-
-            // Oscurecer área fuera del recorte
-            ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            // Arriba
-            ctx.fillRect(0, 0, canvas.width, cropData.startY);
-            // Abajo
-            ctx.fillRect(0, cropData.endY, canvas.width, canvas.height - cropData.endY);
-            // Izquierda
-            ctx.fillRect(0, cropData.startY, cropData.startX, cropData.endY - cropData.startY);
-            // Derecha
-            ctx.fillRect(cropData.endX, cropData.startY, canvas.width - cropData.endX, cropData.endY - cropData.startY);
-
-            // Borde del recorte
-            ctx.strokeStyle = '#e94560';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(cropData.startX, cropData.startY, 
-                cropData.endX - cropData.startX, cropData.endY - cropData.startY);
-
-            // Grid
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-            ctx.lineWidth = 1;
-            const w = cropData.endX - cropData.startX;
-            const h = cropData.endY - cropData.startY;
-            for (let i = 1; i < 3; i++) {
-                ctx.beginPath();
-                ctx.moveTo(cropData.startX + (w/3)*i, cropData.startY);
-                ctx.lineTo(cropData.startX + (w/3)*i, cropData.endY);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(cropData.startX, cropData.startY + (h/3)*i);
-                ctx.lineTo(cropData.endX, cropData.startY + (h/3)*i);
-                ctx.stroke();
-            }
-
-            // Handles
-            const handleSize = 12;
-            ctx.fillStyle = '#e94560';
-            const handles = getHandles();
-            handles.forEach(h => {
-                ctx.fillRect(h.x - handleSize/2, h.y - handleSize/2, handleSize, handleSize);
-            });
-        }
-
-        function getHandles() {
-            const { startX: sx, startY: sy, endX: ex, endY: ey } = cropData;
-            return [
-                { x: sx, y: sy, cursor: 'nw', type: 'tl' },
-                { x: (sx+ex)/2, y: sy, cursor: 'n', type: 't' },
-                { x: ex, y: sy, cursor: 'ne', type: 'tr' },
-                { x: ex, y: (sy+ey)/2, cursor: 'e', type: 'r' },
-                { x: ex, y: ey, cursor: 'se', type: 'br' },
-                { x: (sx+ex)/2, y: ey, cursor: 's', type: 'b' },
-                { x: sx, y: ey, cursor: 'sw', type: 'bl' },
-                { x: sx, y: (sy+ey)/2, cursor: 'w', type: 'l' },
-            ];
-        }
-
-        function setupCropEvents() {
-            const canvas = document.getElementById('cropCanvas');
-            
-            canvas.removeEventListener('pointerdown', onPointerDown);
-            canvas.removeEventListener('pointermove', onPointerMove);
-            canvas.removeEventListener('pointerup', onPointerUp);
-
-            canvas.addEventListener('pointerdown', onPointerDown);
-            canvas.addEventListener('pointermove', onPointerMove);
-            canvas.addEventListener('pointerup', onPointerUp);
-        }
-
-        function getPointerPos(e) {
-            const canvas = document.getElementById('cropCanvas');
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return {
-                x: (e.clientX - rect.left) * scaleX,
-                y: (e.clientY - rect.top) * scaleY
-            };
-        }
-
-        function onPointerDown(e) {
-            e.preventDefault();
-            const pos = getPointerPos(e);
-            const handles = getHandles();
-            const threshold = 20;
-
-            // Verificar si tocó un handle
-            for (let h of handles) {
-                if (Math.abs(pos.x - h.x) < threshold && Math.abs(pos.y - h.y) < threshold) {
-                    cropData.dragging = h.type;
-                    return;
-                }
-            }
-
-            // Verificar si está dentro del área de recorte (mover todo)
-            if (pos.x > cropData.startX && pos.x < cropData.endX &&
-                pos.y > cropData.startY && pos.y < cropData.endY) {
-                cropData.dragging = 'move';
-                cropData.lastX = pos.x;
-                cropData.lastY = pos.y;
-            }
-        }
-
-        function onPointerMove(e) {
-            e.preventDefault();
-            if (!cropData.dragging) return;
-            const pos = getPointerPos(e);
-            const canvas = document.getElementById('cropCanvas');
-            const minSize = 30;
-
-            if (cropData.dragging === 'move') {
-                const dx = pos.x - cropData.lastX;
-                const dy = pos.y - cropData.lastY;
-                const w = cropData.endX - cropData.startX;
-                const h = cropData.endY - cropData.startY;
-                
-                let newSX = cropData.startX + dx;
-                let newSY = cropData.startY + dy;
-                
-                if (newSX < 0) newSX = 0;
-                if (newSY < 0) newSY = 0;
-                if (newSX + w > canvas.width) newSX = canvas.width - w;
-                if (newSY + h > canvas.height) newSY = canvas.height - h;
-                
-                cropData.startX = newSX;
-                cropData.startY = newSY;
-                cropData.endX = newSX + w;
-                cropData.endY = newSY + h;
-                cropData.lastX = pos.x;
-                cropData.lastY = pos.y;
-            } else {
-                const type = cropData.dragging;
-                if (type.includes('l')) cropData.startX = Math.min(pos.x, cropData.endX - minSize);
-                if (type.includes('r')) cropData.endX = Math.max(pos.x, cropData.startX + minSize);
-                if (type.includes('t')) cropData.startY = Math.min(pos.y, cropData.endY - minSize);
-                if (type.includes('b')) cropData.endY = Math.max(pos.y, cropData.startY + minSize);
-
-                // Limitar al canvas
-                cropData.startX = Math.max(0, cropData.startX);
-                cropData.startY = Math.max(0, cropData.startY);
-                cropData.endX = Math.min(canvas.width, cropData.endX);
-                cropData.endY = Math.min(canvas.height, cropData.endY);
-            }
-
-            drawCrop();
-        }
-
-        function onPointerUp(e) {
-            cropData.dragging = null;
-        }
-
-        function resetCrop() {
-            const canvas = document.getElementById('cropCanvas');
-            cropData.startX = 0;
-            cropData.startY = 0;
-            cropData.endX = canvas.width;
-            cropData.endY = canvas.height;
-            cropData.rotation = 0;
-            drawCrop();
-        }
-
-        function rotateCrop() {
-            const canvas = document.getElementById('cropCanvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Crear canvas temporal con la imagen rotada
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            if (cropData.rotation % 2 === 0) {
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
-            } else {
-                tempCanvas.width = canvas.height;
-                tempCanvas.height = canvas.width;
-            }
-            
-            tempCtx.translate(tempCanvas.width/2, tempCanvas.height/2);
-            tempCtx.rotate(Math.PI/2);
-            tempCtx.drawImage(originalImage, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
-            
-            // Actualizar imagen original
-            const newImg = new Image();
-            newImg.onload = () => {
-                originalImage = newImg;
-                const maxW = Math.min(400, window.innerWidth - 30);
-                const ratio = newImg.height / newImg.width;
-                canvas.width = maxW;
-                canvas.height = maxW * ratio;
-                cropData.startX = 0;
-                cropData.startY = 0;
-                cropData.endX = canvas.width;
-                cropData.endY = canvas.height;
-                cropData.rotation = (cropData.rotation + 1) % 4;
-                drawCrop();
-            };
-            newImg.src = tempCanvas.toDataURL();
-        }
-
-        function applyCrop() {
-            const canvas = document.getElementById('cropCanvas');
-            const cropW = cropData.endX - cropData.startX;
-            const cropH = cropData.endY - cropData.startY;
-            const scaleX = originalImage.width / canvas.width;
-            const scaleY = originalImage.height / canvas.height;
-
-            const resultCanvas = document.createElement('canvas');
-            resultCanvas.width = cropW * scaleX;
-            resultCanvas.height = cropH * scaleY;
-            const ctx = resultCanvas.getContext('2d');
-            ctx.drawImage(originalImage,
-                cropData.startX * scaleX, cropData.startY * scaleY,
-                cropW * scaleX, cropH * scaleY,
-                0, 0,
-                resultCanvas.width, resultCanvas.height
-            );
-
-            currentImageData = resultCanvas.toDataURL('image/jpeg', 0.9);
-            showMetadataScreen();
-        }
-
-        function showMetadataScreen() {
-            document.getElementById('metadataPreview').src = currentImageData;
-            document.getElementById('photoTitle').value = '';
-            document.getElementById('photoDesc').value = '';
-            showScreen('screenMetadata');
-            setTimeout(() => document.getElementById('photoTitle').focus(), 300);
-        }
-
-        // Guardar foto
-        async function savePhoto() {
-            const title = document.getElementById('photoTitle').value.trim();
-            const desc = document.getElementById('photoDesc').value.trim();
-
-            if (!title) {
-                showToast('El título es obligatorio', 'error');
-                return;
-            }
-
-            const photo = {
-                id: Date.now().toString(),
-                title: title,
-                description: desc,
-                data: currentImageData,
-                date: new Date().toISOString(),
-                filename: sanitizeFilename(title) + '_' + Date.now() + '.jpg'
-            };
-
-            // Guardar en IndexedDB
-            await saveToDB(photo);
-
-            // Intentar guardar en carpeta
-            if (folderHandle) {
-                try {
-                    const blob = await dataURLtoBlob(currentImageData);
-                    await saveToFolder(photo.filename, blob);
-                    
-                    // También guardar metadata como JSON
-                    const metaBlob = new Blob([JSON.stringify({title: photo.title, description: photo.description, date: photo.date}, null, 2)], {type: 'application/json'});
-                    await saveToFolder(photo.filename.replace('.jpg', '.json'), metaBlob);
-                } catch(e) {
-                    console.error('Error guardando en carpeta:', e);
-                }
-            }
-
-            photos.push(photo);
-            currentImageData = null;
-            showToast('✅ Foto guardada correctamente');
-            showScreen('screenGallery');
-        }
-
-        function cancelCapture() {
-            currentImageData = null;
-            showScreen('screenGallery');
-        }
-
-        // Galería
-        async function renderGallery() {
-            photos = await getAllFromDB();
-            photos.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            const gallery = document.getElementById('gallery');
-            const emptyState = document.getElementById('emptyState');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-            const filtered = photos.filter(p => 
-                p.title.toLowerCase().includes(searchTerm) || 
-                (p.description && p.description.toLowerCase().includes(searchTerm))
-            );
-
-            document.getElementById('photoCount').textContent = `${filtered.length} foto${filtered.length !== 1 ? 's' : ''}`;
-
-            if (filtered.length === 0) {
-                gallery.innerHTML = '';
-                emptyState.style.display = 'block';
-                if (photos.length > 0 && searchTerm) {
-                    emptyState.innerHTML = `
-                        <div class="icon">🔍</div>
-                        <p>No se encontraron resultados</p>
-                    `;
-                } else {
-                    emptyState.innerHTML = `
-                        <div class="icon">📷</div>
-                        <p>No hay fotos aún</p>
-                        <button class="btn btn-primary" onclick="showScreen('screenCapture')">Tomar primera foto</button>
-                    `;
-                }
-            } else {
-                emptyState.style.display = 'none';
-                gallery.innerHTML = filtered.map(photo => `
-                    <div class="gallery-item" onclick="showDetail('${photo.id}')">
-                        <img src="${photo.data}" alt="${photo.title}" loading="lazy">
-                        <div class="overlay">
-                            <h3>${escapeHtml(photo.title)}</h3>
-                            <p>${escapeHtml(photo.description || 'Sin descripción')}</p>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function filterGallery() {
-            renderGallery();
-        }
-
-        // Detalle
-        function showDetail(id) {
-            const photo = photos.find(p => p.id === id);
-            if (!photo) return;
-            currentEditId = id;
-
-            const detail = document.getElementById('photoDetail');
-            const date = new Date(photo.date).toLocaleString('es');
-            
-            detail.innerHTML = `
-                <img src="${photo.data}" alt="${escapeHtml(photo.title)}">
-                <div class="info">
-                    <h2>${escapeHtml(photo.title)}</h2>
-                    <p>${escapeHtml(photo.description || 'Sin descripción')}</p>
-                    <p class="date">📅 ${date}</p>
-                </div>
-                <div class="detail-actions">
-                    <button class="btn btn-secondary btn-small" onclick="editPhoto('${photo.id}')">✏️ Editar</button>
-                    <button class="btn btn-secondary btn-small" onclick="downloadPhoto('${photo.id}')">⬇️ Descargar</button>
-                    <button class="btn btn-danger btn-small" onclick="confirmDelete('${photo.id}')">🗑️ Eliminar</button>
-                    <button class="btn btn-secondary btn-small" onclick="showScreen('screenGallery')">← Volver</button>
-                </div>
-            `;
-            showScreen('screenDetail');
-        }
-
-        // Editar
-        function editPhoto(id) {
-            const photo = photos.find(p => p.id === id);
-            if (!photo) return;
-            currentEditId = id;
-            document.getElementById('editTitle').value = photo.title;
-            document.getElementById('editDesc').value = photo.description || '';
-            document.getElementById('editModal').classList.add('active');
-        }
-
-        async function updatePhoto() {
-            const photo = photos.find(p => p.id === currentEditId);
-            if (!photo) return;
-
-            photo.title = document.getElementById('editTitle').value.trim();
-            photo.description = document.getElementById('editDesc').value.trim();
-
-            if (!photo.title) {
-                showToast('El título es obligatorio', 'error');
-                return;
-            }
-
-            await saveToDB(photo);
-
-            // Actualizar archivo JSON en carpeta
-            if (folderHandle) {
-                try {
-                    const metaBlob = new Blob([JSON.stringify({title: photo.title, description: photo.description, date: photo.date}, null, 2)], {type: 'application/json'});
-                    await saveToFolder(photo.filename.replace('.jpg', '.json'), metaBlob);
-                } catch(e) {}
-            }
-
-            closeModal('editModal');
-            showToast('✅ Foto actualizada');
-            showDetail(currentEditId);
-        }
-
-        // Descargar
-        function downloadPhoto(id) {
-            const photo = photos.find(p => p.id === id);
-            if (!photo) return;
-            
-            const link = document.createElement('a');
-            link.href = photo.data;
-            link.download = photo.filename;
-            link.click();
-            showToast('⬇️ Descargando foto...');
-        }
-
-        // Eliminar
-        function confirmDelete(id) {
-            if (confirm('¿Estás seguro de eliminar esta foto?')) {
-                deletePhoto(id);
-            }
-        }
-
-        async function deletePhoto(id) {
-            const photo = photos.find(p => p.id === id);
-            await deleteFromDB(id);
-            
-            if (folderHandle && photo) {
-                await deleteFromFolder(photo.filename);
-                await deleteFromFolder(photo.filename.replace('.jpg', '.json'));
-            }
-
-            photos = photos.filter(p => p.id !== id);
-            showToast('🗑️ Foto eliminada');
-            showScreen('screenGallery');
-        }
-
-        // Utilidades
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        function showToast(message, type = '') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = 'toast show' + (type ? ' ' + type : '');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        function sanitizeFilename(name) {
-            return name.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s-]/g, '').replace(/\s+/g, '_').substring(0, 50);
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function dataURLtoBlob(dataURL) {
-            const parts = dataURL.split(',');
-            const mime = parts[0].match(/:(.*?);/)[1];
-            const bstr = atob(parts[1]);
-            const n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            for (let i = 0; i < n; i++) {
-                u8arr[i] = bstr.charCodeAt(i);
-            }
-            return new Blob([u8arr], { type: mime });
-        }
-
-        // Inicializar
-        async function init() {
-            await initDB();
-            renderGallery();
-        }
-
-        init();
-    </script>
+      } catch (err) {
+        showToast(err.message || 'No se pudo guardar', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Guardar';
+      }
+    }
+
+    function updateMetaDot() {
+      const hasData = Boolean($('photoTitle').value.trim() || $('photoDesc').value.trim());
+      $('metaDot').classList.toggle('visible', hasData);
+    }
+
+    // ==================== EVENTOS ====================
+    $('tabGallery').addEventListener('click', () => {
+      showScreen('screenGallery');
+      loadPhotos();
+    });
+    $('tabCapture').addEventListener('click', () => startLiveCamera('environment'));
+    $('emptyCaptureBtn').addEventListener('click', () => startLiveCamera('environment'));
+    $('refreshBtn').addEventListener('click', loadPhotos);
+    $('searchInput').addEventListener('input', renderGallery);
+    $('photoTitle').addEventListener('input', updateMetaDot);
+    $('photoDesc').addEventListener('input', updateMetaDot);
+
+    document.querySelectorAll('.pill-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll('.pill-btn').forEach((b) => b.classList.toggle('active', b === btn));
+        renderGallery();
+      });
+    });
+
+    $('closeCameraBtn').addEventListener('click', () => {
+      if (seqSavedCount > 0) renderGallery();
+      showScreen('screenGallery');
+    });
+    $('seqModeBtn').addEventListener('click', () => {
+      seqMode = !seqMode;
+      updateSeqUI();
+    });
+    $('shutterBtn').addEventListener('click', captureFromVideo);
+    $('flashBtn').addEventListener('click', toggleFlash);
+    $('flipCameraBtn').addEventListener('click', () => {
+      startLiveCamera(cameraFacing === 'environment' ? 'user' : 'environment');
+    });
+    $('galleryInput').addEventListener('change', handleFileInput);
+
+    // Editor
+    $('editorCanvas').addEventListener('pointerdown', onEditorPointerDown);
+    $('editorCanvas').addEventListener('pointermove', onEditorPointerMove);
+    $('editorCanvas').addEventListener('pointerup', onEditorPointerUp);
+    $('editorCanvas').addEventListener('pointercancel', onEditorPointerUp);
+
+    $('dockTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.dock-tab');
+      if (tab) setDockTab(tab.dataset.panel);
+    });
+
+    $('ratioBar').addEventListener('click', (e) => {
+      const chip = e.target.closest('.ratio-chip');
+      if (!chip) return;
+      document.querySelectorAll('.ratio-chip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      cropAspect = chip.dataset.ratio === 'free' ? null : Number(chip.dataset.ratio);
+      imageModified = true;
+      resetCropRect();
+      drawEditorCanvas();
+    });
+
+    $('rotateBtn').addEventListener('click', () => transformSourceCanvas('rotate'));
+    $('flipHBtn').addEventListener('click', () => transformSourceCanvas('flipH'));
+    $('resetCropBtn').addEventListener('click', () => {
+      cropAspect = null;
+      document.querySelectorAll('.ratio-chip').forEach((c) => {
+        c.classList.toggle('active', c.dataset.ratio === 'free');
+      });
+      resetCropRect();
+      drawEditorCanvas();
+    });
+
+    function bindSlider(inputId, valId, key) {
+      $(inputId).addEventListener('input', (e) => {
+        adjustments[key] = Number(e.target.value);
+        $(valId).textContent = `${adjustments[key]}%`;
+        imageModified = true;
+        drawEditorCanvas();
+      });
+    }
+    bindSlider('brightnessRange', 'brightnessVal', 'brightness');
+    bindSlider('contrastRange', 'contrastVal', 'contrast');
+    bindSlider('saturateRange', 'saturateVal', 'saturate');
+
+    $('resetAdjustBtn').addEventListener('click', () => {
+      resetAdjustmentsState();
+      imageModified = true;
+      drawEditorCanvas();
+    });
+
+    $('retakeBtn').addEventListener('click', () => startLiveCamera(cameraFacing));
+    $('cancelEditBtn').addEventListener('click', () => {
+      const wasEditing = editingPhotoId;
+      sourceCanvas = null;
+      editingPhotoId = null;
+      if (wasEditing) openDetail(wasEditing);
+      else showScreen('screenGallery');
+    });
+    $('saveBtn').addEventListener('click', saveCurrentEdit);
+    $('publishBtn').addEventListener('click', publishChanges);
+
+    window.addEventListener('beforeunload', (e) => {
+      if (supportsPublish && hasUnpublished) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if ($('screenEditor').classList.contains('active') && sourceCanvas) {
+        preserveCropOnResize();
+      }
+    });
+
+    (async function init() {
+      await checkServer();
+      await loadPhotos();
+    })();
+  </script>
 </body>
 </html>

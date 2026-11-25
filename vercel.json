@@ -1,0 +1,15 @@
+{
+  "rewrites": [
+    { "source": "/api/health", "destination": "/api/photos?action=health" },
+    { "source": "/api/publish", "destination": "/api/photos?action=publish" },
+    { "source": "/api/photos/:id", "destination": "/api/photos?id=:id" }
+  ],
+  "headers": [
+    {
+      "source": "/galeria/galeria.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, must-revalidate" }
+      ]
+    }
+  ]
+}

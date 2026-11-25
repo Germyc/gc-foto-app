@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vista Galería del Cliente (Demo)</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #0f172a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 1.15rem;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-dark {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 16px;
+    }
+
+    .item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .item img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      display: block;
+      background: #e2e8f0;
+    }
+
+    .item-body {
+      padding: 14px;
+    }
+
+    .item-body h2 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .item-body p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 64px 20px;
+      color: var(--muted);
+      background: #fff;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.88);
+      z-index: 100;
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox-card {
+      background: #fff;
+      border-radius: 14px;
+      max-width: 680px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .lightbox-card img {
+      width: 100%;
+      max-height: 68vh;
+      object-fit: contain;
+      background: #020617;
+      display: block;
+    }
+
+    .lightbox-body {
+      padding: 16px;
+    }
+
+    .lightbox-body h3 {
+      margin-bottom: 6px;
+    }
+
+    .lightbox-body p {
+      color: var(--muted);
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Galería del Cliente (Vista Pública)</h1>
+      <p>Lee automáticamente <code>./galeria/galeria.json</code></p>
+    </div>
+    <div class="actions">
+      <button class="btn" type="button" id="reloadBtn">Recargar</button>
+      <a class="btn btn-dark" href="./">Cargar fotos</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none;">
+      Todavía no hay fotos publicadas en <code>galeria/galeria.json</code>.
+    </div>
+  </main>
+
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-card">
+      <img id="lbImg" alt="">
+      <div class="lightbox-body">
+        <h3 id="lbTitle"></h3>
+        <p id="lbDesc"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function escapeHtml(text) {
+      const d = document.createElement('div');
+      d.textContent = text || '';
+      return d.innerHTML;
+    }
+
+    async function loadClientGallery() {
+      const grid = document.getElementById('grid');
+      const empty = document.getElementById('empty');
+      try {
+        const res = await fetch('./galeria/galeria.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('No se encontró galeria.json');
+        const items = await res.json();
+
+        if (!Array.isArray(items) || items.length === 0) {
+          grid.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+
+        empty.style.display = 'none';
+        grid.innerHTML = items.map((item, idx) => `
+          <article class="item" data-idx="${idx}">
+            <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.title || 'Foto de galería')}" loading="lazy">
+            ${(item.title || item.description) ? `
+            <div class="item-body">
+              ${item.title ? `<h2>${escapeHtml(item.title)}</h2>` : ''}
+              ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
+            </div>` : ''}
+          </article>
+        `).join('');
+
+        grid.querySelectorAll('.item').forEach((el) => {
+          el.addEventListener('click', () => {
+            const item = items[Number(el.dataset.idx)];
+            document.getElementById('lbImg').src = item.image;
+            document.getElementById('lbImg').alt = item.title;
+            document.getElementById('lbTitle').textContent = item.title;
+            document.getElementById('lbDesc').textContent = item.description || '';
+            document.getElementById('lightbox').classList.add('open');
+          });
+        });
+      } catch (err) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        empty.textContent = 'No se pudo cargar galeria/galeria.json: ' + err.message;
+      }
+    }
+
+    document.getElementById('reloadBtn').addEventListener('click', loadClientGallery);
+    document.getElementById('lightbox').addEventListener('click', (e) => {
+      if (e.target.id === 'lightbox') e.target.classList.remove('open');
+    });
+
+    loadClientGallery();
+  </script>
+</body>
+</html>
