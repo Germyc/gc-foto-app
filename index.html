@@ -1,97 +1,1267 @@
-<!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>coder-app-name</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mis Fotos</title>
     <style>
-      /* 内联样式确保主题色立即生效，避免闪烁 */
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-      }
-      html.light,
-      html.light body {
-        background-color: #ffffff !important;
-        color: #000000;
-      }
-      html.dark,
-      html.dark body {
-        background-color: #1a1a1a !important;
-        color: #ffffff;
-      }
-    </style>
-    <script>
-      // 在 React 加载前立即设置主题，避免闪烁
-      (function () {
-        const isInIframe = window.self !== window.top;
-
-        function applyThemeToDOM(theme) {
-          document.documentElement.classList.remove("light", "dark");
-          document.documentElement.classList.add(theme);
-          document.documentElement.setAttribute("data-theme", theme);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        if (isInIframe) {
-          // 监听父窗口主动推送的主题消息
-          window.addEventListener("message", function (event) {
-            if (event.data && typeof event.data.theme === "string") {
-              const theme = event.data.theme;
-              if (theme === "light" || theme === "dark") {
-                applyThemeToDOM(theme);
-              }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #16213e, #0f3460);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            color: #e94560;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #e94560;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: #533483;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #6c44a0;
+        }
+
+        .btn-success {
+            background: #00b894;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #00d9a3;
+        }
+
+        .btn-danger {
+            background: #d63031;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Pantallas */
+        .screen {
+            display: none;
+            padding: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Galería */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            padding-bottom: 80px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.03);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-item .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 30px 10px 10px;
+        }
+
+        .gallery-item .overlay h3 {
+            font-size: 0.8rem;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gallery-item .overlay p {
+            font-size: 0.7rem;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        /* Captura */
+        .capture-area {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .camera-input-wrapper {
+            margin: 20px 0;
+        }
+
+        .camera-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .camera-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e94560, #533483);
+            border: 4px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .camera-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.6);
+        }
+
+        .camera-btn span {
+            font-size: 2.5rem;
+        }
+
+        .preview-container {
+            margin: 20px auto;
+            max-width: 100%;
+            position: relative;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            max-height: 50vh;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+
+        /* Recorte */
+        .crop-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            touch-action: none;
+        }
+
+        .crop-container canvas {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+
+        .crop-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .crop-info {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.85rem;
+            margin: 10px 0;
+        }
+
+        /* Formulario de metadata */
+        .metadata-form {
+            max-width: 400px;
+            margin: 20px auto;
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Detalle de foto */
+        .photo-detail {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .photo-detail img {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            margin-bottom: 15px;
+        }
+
+        .photo-detail .info {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 15px;
+        }
+
+        .photo-detail .info h2 {
+            color: #e94560;
+            margin-bottom: 8px;
+        }
+
+        .photo-detail .info p {
+            color: #ccc;
+            line-height: 1.5;
+        }
+
+        .photo-detail .info .date {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Folder status */
+        .folder-status {
+            background: rgba(0,184,148,0.1);
+            border: 1px solid rgba(0,184,148,0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 15px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .folder-status.disconnected {
+            background: rgba(214,48,49,0.1);
+            border-color: rgba(214,48,49,0.3);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #16213e;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal h2 {
+            color: #e94560;
+            margin-bottom: 15px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #00b894;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 300;
+            transition: transform 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.error {
+            background: #d63031;
+        }
+
+        /* Responsive */
+        @media (max-width: 360px) {
+            .gallery {
+                grid-template-columns: repeat(2, 1fr);
             }
-          });
-        } else {
-          // 非 iframe 环境，使用默认 light 主题
-          applyThemeToDOM("light");
         }
-      })();
-    </script>
-      <script>
-      (function () {
-        if (window.self === window.top) return;
-        var reported = {};
-        window.addEventListener("error", function (event) {
-          // 资源加载失败的 error 事件没有 message，此处仅上报 JS 运行时错误
-          if (!event || !event.message) return;
-          var key =
-            event.message + "|" + (event.filename || "") + "|" + (event.lineno || 0);
-          if (reported[key]) return; // 相同错误只上报一次，避免渲染循环刷屏
-          reported[key] = true;
-          try {
-            window.parent.postMessage(
-              {
-                type: "sandbox-runtime-error",
-                payload: {
-                  message: String(event.message).slice(0, 500),
-                  filename: event.filename || "",
-                  lineno: event.lineno || 0,
-                  colno: event.colno || 0,
-                  stack:
-                    event.error && event.error.stack
-                      ? String(event.error.stack).slice(0, 2000)
-                      : ""
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #e94560;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #16213e;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn.active {
+            background: #e94560;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .search-bar {
+            padding: 10px 15px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-size: 0.95rem;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .photo-count {
+            text-align: center;
+            color: #888;
+            font-size: 0.85rem;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>📸 Mis Fotos</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary btn-small" onclick="setupFolder()" id="folderBtn">📁 Carpeta</button>
+        </div>
+    </div>
+
+    <!-- Folder Status -->
+    <div class="folder-status disconnected" id="folderStatus">
+        <span>⚠️</span>
+        <span id="folderStatusText">Sin carpeta configurada. Las fotos se guardan en el navegador.</span>
+    </div>
+
+    <!-- Pantalla Galería -->
+    <div class="screen active" id="screenGallery">
+        <div class="search-bar">
+            <input type="text" placeholder="🔍 Buscar por título o descripción..." id="searchInput" oninput="filterGallery()">
+        </div>
+        <div class="photo-count" id="photoCount"></div>
+        <div class="gallery" id="gallery"></div>
+        <div class="empty-state" id="emptyState">
+            <div class="icon">📷</div>
+            <p>No hay fotos aún</p>
+            <button class="btn btn-primary" onclick="showScreen('screenCapture')">Tomar primera foto</button>
+        </div>
+    </div>
+
+    <!-- Pantalla Captura -->
+    <div class="screen" id="screenCapture">
+        <div class="capture-area">
+            <h2 style="margin-bottom:20px; color:#e94560;">📷 Tomar Foto</h2>
+            <div class="camera-input-wrapper">
+                <label class="camera-btn" for="cameraInput">
+                    <span>📸</span>
+                </label>
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleCapture(event)">
+            </div>
+            <p style="color:#888; margin-top:15px;">Toca el botón para abrir la cámara</p>
+            <p style="color:#666; margin-top:8px; font-size:0.85rem;">También puedes seleccionar una imagen de la galería</p>
+            <div style="margin-top:15px;">
+                <label class="btn btn-secondary" for="galleryInput" style="cursor:pointer;">
+                    🖼️ Seleccionar de galería
+                </label>
+                <input type="file" id="galleryInput" accept="image/*" onchange="handleCapture(event)" style="display:none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla Recorte -->
+    <div class="screen" id="screenCrop">
+        <h2 style="text-align:center; margin-bottom:15px; color:#e94560;">✂️ Recortar Foto</h2>
+        <div class="crop-info">Arrastra las esquinas o los bordes para recortar</div>
+        <div class="crop-container" id="cropContainer">
+            <canvas id="cropCanvas"></canvas>
+        </div>
+        <div class="crop-controls">
+            <button class="btn btn-secondary btn-small" onclick="resetCrop()">↺ Resetear</button>
+            <button class="btn btn-secondary btn-small" onclick="rotateCrop()">🔄 Rotar</button>
+            <button class="btn btn-primary btn-small" onclick="applyCrop()">✓ Aplicar recorte</button>
+        </div>
+    </div>
+
+    <!-- Pantalla Metadata -->
+    <div class="screen" id="screenMetadata">
+        <h2 style="text-align:center; margin-bottom:15px; color:#e94560;">📝 Información de la foto</h2>
+        <div class="preview-container" style="text-align:center;">
+            <img id="metadataPreview" src="" alt="Preview">
+        </div>
+        <div class="metadata-form">
+            <div class="form-group">
+                <label for="photoTitle">Título *</label>
+                <input type="text" id="photoTitle" placeholder="Ej: Atardecer en la playa">
+            </div>
+            <div class="form-group">
+                <label for="photoDesc">Descripción</label>
+                <textarea id="photoDesc" placeholder="Escribe una descripción..."></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn btn-success" onclick="savePhoto()" style="flex:1;">💾 Guardar</button>
+                <button class="btn btn-danger" onclick="cancelCapture()" style="flex:1;">✕ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla Detalle -->
+    <div class="screen" id="screenDetail">
+        <div class="photo-detail" id="photoDetail"></div>
+    </div>
+
+    <!-- Navegación inferior -->
+    <div class="nav-bar" id="navBar">
+        <button class="nav-btn active" onclick="showScreen('screenGallery')" title="Galería">🏠</button>
+        <button class="nav-btn" onclick="showScreen('screenCapture')" title="Tomar foto">📷</button>
+    </div>
+
+    <!-- Modal Editar -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h2>✏️ Editar foto</h2>
+            <div class="form-group">
+                <label for="editTitle">Título</label>
+                <input type="text" id="editTitle">
+            </div>
+            <div class="form-group">
+                <label for="editDesc">Descripción</label>
+                <textarea id="editDesc"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn btn-success" onclick="updatePhoto()">💾 Guardar</button>
+                <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Estado de la app
+        let photos = [];
+        let currentImageData = null;
+        let currentEditId = null;
+        let folderHandle = null;
+        let cropData = { startX: 0, startY: 0, endX: 0, endY: 0, dragging: null, rotation: 0 };
+        let originalImage = null;
+
+        // IndexedDB
+        const DB_NAME = 'MisFotosDB';
+        const DB_VERSION = 1;
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('photos')) {
+                        const store = db.createObjectStore('photos', { keyPath: 'id' });
+                        store.createIndex('date', 'date');
+                    }
+                };
+            });
+        }
+
+        function saveToDB(photo) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('photos', 'readwrite');
+                const store = tx.objectStore('photos');
+                store.put(photo);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        function deleteFromDB(id) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('photos', 'readwrite');
+                const store = tx.objectStore('photos');
+                store.delete(id);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        function getAllFromDB() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('photos', 'readonly');
+                const store = tx.objectStore('photos');
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // File System Access API
+        async function setupFolder() {
+            if (!window.showDirectoryPicker) {
+                showToast('Tu navegador no soporta guardado en carpeta. Las fotos se guardan en el navegador.', 'error');
+                return;
+            }
+            try {
+                folderHandle = await window.showDirectoryPicker({
+                    mode: 'readwrite',
+                    startIn: 'pictures'
+                });
+                document.getElementById('folderStatus').classList.remove('disconnected');
+                document.getElementById('folderStatusText').textContent = `📁 Carpeta: ${folderHandle.name}`;
+                document.getElementById('folderBtn').textContent = '📁 ' + folderHandle.name;
+                showToast('Carpeta configurada correctamente');
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    showToast('Error al seleccionar carpeta', 'error');
                 }
-              },
-              "*"
+            }
+        }
+
+        async function saveToFolder(filename, blob) {
+            if (!folderHandle) return false;
+            try {
+                const fileHandle = await folderHandle.getFileHandle(filename, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                return true;
+            } catch (e) {
+                console.error('Error guardando en carpeta:', e);
+                return false;
+            }
+        }
+
+        async function deleteFromFolder(filename) {
+            if (!folderHandle) return;
+            try {
+                await folderHandle.removeEntry(filename);
+            } catch (e) {
+                console.log('No se pudo eliminar del filesystem:', e);
+            }
+        }
+
+        // Navegación
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (screenId === 'screenGallery') {
+                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+                renderGallery();
+            } else if (screenId === 'screenCapture') {
+                document.querySelectorAll('.nav-btn')[1].classList.add('active');
+            }
+
+            // Mostrar/ocultar nav bar
+            const navBar = document.getElementById('navBar');
+            if (['screenDetail', 'screenCrop', 'screenMetadata'].includes(screenId)) {
+                navBar.style.display = 'none';
+            } else {
+                navBar.style.display = 'flex';
+            }
+        }
+
+        // Captura
+        function handleCapture(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImageData = e.target.result;
+                initCrop();
+                showScreen('screenCrop');
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        // Recorte
+        function initCrop() {
+            const canvas = document.getElementById('cropCanvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = () => {
+                originalImage = img;
+                const maxW = Math.min(400, window.innerWidth - 30);
+                const ratio = img.height / img.width;
+                canvas.width = maxW;
+                canvas.height = maxW * ratio;
+                cropData = {
+                    startX: 0,
+                    startY: 0,
+                    endX: canvas.width,
+                    endY: canvas.height,
+                    dragging: null,
+                    rotation: 0,
+                    imgWidth: img.width,
+                    imgHeight: img.height
+                };
+                drawCrop();
+                setupCropEvents();
+            };
+            img.src = currentImageData;
+        }
+
+        function drawCrop() {
+            const canvas = document.getElementById('cropCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dibujar imagen
+            ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+
+            // Oscurecer área fuera del recorte
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            // Arriba
+            ctx.fillRect(0, 0, canvas.width, cropData.startY);
+            // Abajo
+            ctx.fillRect(0, cropData.endY, canvas.width, canvas.height - cropData.endY);
+            // Izquierda
+            ctx.fillRect(0, cropData.startY, cropData.startX, cropData.endY - cropData.startY);
+            // Derecha
+            ctx.fillRect(cropData.endX, cropData.startY, canvas.width - cropData.endX, cropData.endY - cropData.startY);
+
+            // Borde del recorte
+            ctx.strokeStyle = '#e94560';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cropData.startX, cropData.startY, 
+                cropData.endX - cropData.startX, cropData.endY - cropData.startY);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 1;
+            const w = cropData.endX - cropData.startX;
+            const h = cropData.endY - cropData.startY;
+            for (let i = 1; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(cropData.startX + (w/3)*i, cropData.startY);
+                ctx.lineTo(cropData.startX + (w/3)*i, cropData.endY);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cropData.startX, cropData.startY + (h/3)*i);
+                ctx.lineTo(cropData.endX, cropData.startY + (h/3)*i);
+                ctx.stroke();
+            }
+
+            // Handles
+            const handleSize = 12;
+            ctx.fillStyle = '#e94560';
+            const handles = getHandles();
+            handles.forEach(h => {
+                ctx.fillRect(h.x - handleSize/2, h.y - handleSize/2, handleSize, handleSize);
+            });
+        }
+
+        function getHandles() {
+            const { startX: sx, startY: sy, endX: ex, endY: ey } = cropData;
+            return [
+                { x: sx, y: sy, cursor: 'nw', type: 'tl' },
+                { x: (sx+ex)/2, y: sy, cursor: 'n', type: 't' },
+                { x: ex, y: sy, cursor: 'ne', type: 'tr' },
+                { x: ex, y: (sy+ey)/2, cursor: 'e', type: 'r' },
+                { x: ex, y: ey, cursor: 'se', type: 'br' },
+                { x: (sx+ex)/2, y: ey, cursor: 's', type: 'b' },
+                { x: sx, y: ey, cursor: 'sw', type: 'bl' },
+                { x: sx, y: (sy+ey)/2, cursor: 'w', type: 'l' },
+            ];
+        }
+
+        function setupCropEvents() {
+            const canvas = document.getElementById('cropCanvas');
+            
+            canvas.removeEventListener('pointerdown', onPointerDown);
+            canvas.removeEventListener('pointermove', onPointerMove);
+            canvas.removeEventListener('pointerup', onPointerUp);
+
+            canvas.addEventListener('pointerdown', onPointerDown);
+            canvas.addEventListener('pointermove', onPointerMove);
+            canvas.addEventListener('pointerup', onPointerUp);
+        }
+
+        function getPointerPos(e) {
+            const canvas = document.getElementById('cropCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+
+        function onPointerDown(e) {
+            e.preventDefault();
+            const pos = getPointerPos(e);
+            const handles = getHandles();
+            const threshold = 20;
+
+            // Verificar si tocó un handle
+            for (let h of handles) {
+                if (Math.abs(pos.x - h.x) < threshold && Math.abs(pos.y - h.y) < threshold) {
+                    cropData.dragging = h.type;
+                    return;
+                }
+            }
+
+            // Verificar si está dentro del área de recorte (mover todo)
+            if (pos.x > cropData.startX && pos.x < cropData.endX &&
+                pos.y > cropData.startY && pos.y < cropData.endY) {
+                cropData.dragging = 'move';
+                cropData.lastX = pos.x;
+                cropData.lastY = pos.y;
+            }
+        }
+
+        function onPointerMove(e) {
+            e.preventDefault();
+            if (!cropData.dragging) return;
+            const pos = getPointerPos(e);
+            const canvas = document.getElementById('cropCanvas');
+            const minSize = 30;
+
+            if (cropData.dragging === 'move') {
+                const dx = pos.x - cropData.lastX;
+                const dy = pos.y - cropData.lastY;
+                const w = cropData.endX - cropData.startX;
+                const h = cropData.endY - cropData.startY;
+                
+                let newSX = cropData.startX + dx;
+                let newSY = cropData.startY + dy;
+                
+                if (newSX < 0) newSX = 0;
+                if (newSY < 0) newSY = 0;
+                if (newSX + w > canvas.width) newSX = canvas.width - w;
+                if (newSY + h > canvas.height) newSY = canvas.height - h;
+                
+                cropData.startX = newSX;
+                cropData.startY = newSY;
+                cropData.endX = newSX + w;
+                cropData.endY = newSY + h;
+                cropData.lastX = pos.x;
+                cropData.lastY = pos.y;
+            } else {
+                const type = cropData.dragging;
+                if (type.includes('l')) cropData.startX = Math.min(pos.x, cropData.endX - minSize);
+                if (type.includes('r')) cropData.endX = Math.max(pos.x, cropData.startX + minSize);
+                if (type.includes('t')) cropData.startY = Math.min(pos.y, cropData.endY - minSize);
+                if (type.includes('b')) cropData.endY = Math.max(pos.y, cropData.startY + minSize);
+
+                // Limitar al canvas
+                cropData.startX = Math.max(0, cropData.startX);
+                cropData.startY = Math.max(0, cropData.startY);
+                cropData.endX = Math.min(canvas.width, cropData.endX);
+                cropData.endY = Math.min(canvas.height, cropData.endY);
+            }
+
+            drawCrop();
+        }
+
+        function onPointerUp(e) {
+            cropData.dragging = null;
+        }
+
+        function resetCrop() {
+            const canvas = document.getElementById('cropCanvas');
+            cropData.startX = 0;
+            cropData.startY = 0;
+            cropData.endX = canvas.width;
+            cropData.endY = canvas.height;
+            cropData.rotation = 0;
+            drawCrop();
+        }
+
+        function rotateCrop() {
+            const canvas = document.getElementById('cropCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Crear canvas temporal con la imagen rotada
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            if (cropData.rotation % 2 === 0) {
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+            } else {
+                tempCanvas.width = canvas.height;
+                tempCanvas.height = canvas.width;
+            }
+            
+            tempCtx.translate(tempCanvas.width/2, tempCanvas.height/2);
+            tempCtx.rotate(Math.PI/2);
+            tempCtx.drawImage(originalImage, -canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
+            
+            // Actualizar imagen original
+            const newImg = new Image();
+            newImg.onload = () => {
+                originalImage = newImg;
+                const maxW = Math.min(400, window.innerWidth - 30);
+                const ratio = newImg.height / newImg.width;
+                canvas.width = maxW;
+                canvas.height = maxW * ratio;
+                cropData.startX = 0;
+                cropData.startY = 0;
+                cropData.endX = canvas.width;
+                cropData.endY = canvas.height;
+                cropData.rotation = (cropData.rotation + 1) % 4;
+                drawCrop();
+            };
+            newImg.src = tempCanvas.toDataURL();
+        }
+
+        function applyCrop() {
+            const canvas = document.getElementById('cropCanvas');
+            const cropW = cropData.endX - cropData.startX;
+            const cropH = cropData.endY - cropData.startY;
+            const scaleX = originalImage.width / canvas.width;
+            const scaleY = originalImage.height / canvas.height;
+
+            const resultCanvas = document.createElement('canvas');
+            resultCanvas.width = cropW * scaleX;
+            resultCanvas.height = cropH * scaleY;
+            const ctx = resultCanvas.getContext('2d');
+            ctx.drawImage(originalImage,
+                cropData.startX * scaleX, cropData.startY * scaleY,
+                cropW * scaleX, cropH * scaleY,
+                0, 0,
+                resultCanvas.width, resultCanvas.height
             );
-          } catch (e) {
-            /* 上报失败不影响页面运行 */
-          }
-        });
-      })();
+
+            currentImageData = resultCanvas.toDataURL('image/jpeg', 0.9);
+            showMetadataScreen();
+        }
+
+        function showMetadataScreen() {
+            document.getElementById('metadataPreview').src = currentImageData;
+            document.getElementById('photoTitle').value = '';
+            document.getElementById('photoDesc').value = '';
+            showScreen('screenMetadata');
+            setTimeout(() => document.getElementById('photoTitle').focus(), 300);
+        }
+
+        // Guardar foto
+        async function savePhoto() {
+            const title = document.getElementById('photoTitle').value.trim();
+            const desc = document.getElementById('photoDesc').value.trim();
+
+            if (!title) {
+                showToast('El título es obligatorio', 'error');
+                return;
+            }
+
+            const photo = {
+                id: Date.now().toString(),
+                title: title,
+                description: desc,
+                data: currentImageData,
+                date: new Date().toISOString(),
+                filename: sanitizeFilename(title) + '_' + Date.now() + '.jpg'
+            };
+
+            // Guardar en IndexedDB
+            await saveToDB(photo);
+
+            // Intentar guardar en carpeta
+            if (folderHandle) {
+                try {
+                    const blob = await dataURLtoBlob(currentImageData);
+                    await saveToFolder(photo.filename, blob);
+                    
+                    // También guardar metadata como JSON
+                    const metaBlob = new Blob([JSON.stringify({title: photo.title, description: photo.description, date: photo.date}, null, 2)], {type: 'application/json'});
+                    await saveToFolder(photo.filename.replace('.jpg', '.json'), metaBlob);
+                } catch(e) {
+                    console.error('Error guardando en carpeta:', e);
+                }
+            }
+
+            photos.push(photo);
+            currentImageData = null;
+            showToast('✅ Foto guardada correctamente');
+            showScreen('screenGallery');
+        }
+
+        function cancelCapture() {
+            currentImageData = null;
+            showScreen('screenGallery');
+        }
+
+        // Galería
+        async function renderGallery() {
+            photos = await getAllFromDB();
+            photos.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const gallery = document.getElementById('gallery');
+            const emptyState = document.getElementById('emptyState');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            const filtered = photos.filter(p => 
+                p.title.toLowerCase().includes(searchTerm) || 
+                (p.description && p.description.toLowerCase().includes(searchTerm))
+            );
+
+            document.getElementById('photoCount').textContent = `${filtered.length} foto${filtered.length !== 1 ? 's' : ''}`;
+
+            if (filtered.length === 0) {
+                gallery.innerHTML = '';
+                emptyState.style.display = 'block';
+                if (photos.length > 0 && searchTerm) {
+                    emptyState.innerHTML = `
+                        <div class="icon">🔍</div>
+                        <p>No se encontraron resultados</p>
+                    `;
+                } else {
+                    emptyState.innerHTML = `
+                        <div class="icon">📷</div>
+                        <p>No hay fotos aún</p>
+                        <button class="btn btn-primary" onclick="showScreen('screenCapture')">Tomar primera foto</button>
+                    `;
+                }
+            } else {
+                emptyState.style.display = 'none';
+                gallery.innerHTML = filtered.map(photo => `
+                    <div class="gallery-item" onclick="showDetail('${photo.id}')">
+                        <img src="${photo.data}" alt="${photo.title}" loading="lazy">
+                        <div class="overlay">
+                            <h3>${escapeHtml(photo.title)}</h3>
+                            <p>${escapeHtml(photo.description || 'Sin descripción')}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function filterGallery() {
+            renderGallery();
+        }
+
+        // Detalle
+        function showDetail(id) {
+            const photo = photos.find(p => p.id === id);
+            if (!photo) return;
+            currentEditId = id;
+
+            const detail = document.getElementById('photoDetail');
+            const date = new Date(photo.date).toLocaleString('es');
+            
+            detail.innerHTML = `
+                <img src="${photo.data}" alt="${escapeHtml(photo.title)}">
+                <div class="info">
+                    <h2>${escapeHtml(photo.title)}</h2>
+                    <p>${escapeHtml(photo.description || 'Sin descripción')}</p>
+                    <p class="date">📅 ${date}</p>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn btn-secondary btn-small" onclick="editPhoto('${photo.id}')">✏️ Editar</button>
+                    <button class="btn btn-secondary btn-small" onclick="downloadPhoto('${photo.id}')">⬇️ Descargar</button>
+                    <button class="btn btn-danger btn-small" onclick="confirmDelete('${photo.id}')">🗑️ Eliminar</button>
+                    <button class="btn btn-secondary btn-small" onclick="showScreen('screenGallery')">← Volver</button>
+                </div>
+            `;
+            showScreen('screenDetail');
+        }
+
+        // Editar
+        function editPhoto(id) {
+            const photo = photos.find(p => p.id === id);
+            if (!photo) return;
+            currentEditId = id;
+            document.getElementById('editTitle').value = photo.title;
+            document.getElementById('editDesc').value = photo.description || '';
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        async function updatePhoto() {
+            const photo = photos.find(p => p.id === currentEditId);
+            if (!photo) return;
+
+            photo.title = document.getElementById('editTitle').value.trim();
+            photo.description = document.getElementById('editDesc').value.trim();
+
+            if (!photo.title) {
+                showToast('El título es obligatorio', 'error');
+                return;
+            }
+
+            await saveToDB(photo);
+
+            // Actualizar archivo JSON en carpeta
+            if (folderHandle) {
+                try {
+                    const metaBlob = new Blob([JSON.stringify({title: photo.title, description: photo.description, date: photo.date}, null, 2)], {type: 'application/json'});
+                    await saveToFolder(photo.filename.replace('.jpg', '.json'), metaBlob);
+                } catch(e) {}
+            }
+
+            closeModal('editModal');
+            showToast('✅ Foto actualizada');
+            showDetail(currentEditId);
+        }
+
+        // Descargar
+        function downloadPhoto(id) {
+            const photo = photos.find(p => p.id === id);
+            if (!photo) return;
+            
+            const link = document.createElement('a');
+            link.href = photo.data;
+            link.download = photo.filename;
+            link.click();
+            showToast('⬇️ Descargando foto...');
+        }
+
+        // Eliminar
+        function confirmDelete(id) {
+            if (confirm('¿Estás seguro de eliminar esta foto?')) {
+                deletePhoto(id);
+            }
+        }
+
+        async function deletePhoto(id) {
+            const photo = photos.find(p => p.id === id);
+            await deleteFromDB(id);
+            
+            if (folderHandle && photo) {
+                await deleteFromFolder(photo.filename);
+                await deleteFromFolder(photo.filename.replace('.jpg', '.json'));
+            }
+
+            photos = photos.filter(p => p.id !== id);
+            showToast('🗑️ Foto eliminada');
+            showScreen('screenGallery');
+        }
+
+        // Utilidades
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show' + (type ? ' ' + type : '');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function sanitizeFilename(name) {
+            return name.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s-]/g, '').replace(/\s+/g, '_').substring(0, 50);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function dataURLtoBlob(dataURL) {
+            const parts = dataURL.split(',');
+            const mime = parts[0].match(/:(.*?);/)[1];
+            const bstr = atob(parts[1]);
+            const n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            for (let i = 0; i < n; i++) {
+                u8arr[i] = bstr.charCodeAt(i);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+
+        // Inicializar
+        async function init() {
+            await initDB();
+            renderGallery();
+        }
+
+        init();
     </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+</body>
 </html>
